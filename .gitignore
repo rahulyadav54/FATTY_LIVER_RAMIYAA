@@ -1,0 +1,13 @@
+# Python cache files
+__pycache__/
+*.py[cod]
+*$py.class
+
+# PyTorch checkpoints / dynamic files
+*.pth.backup
+*.log
+
+# OS / Editor files
+.DS_Store
+.vscode/
+.idea/

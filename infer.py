@@ -121,22 +121,41 @@ def main():
 
     pred, conf, probs = infer_image(model, device, image, transform)
 
-    print(f'\n{"="*50}')
-    print(f'INFERENCE RESULT')
-    print(f'{"="*50}')
-    print(f'Predicted class: {CLASS_NAMES[pred]} (index {pred})')
-    print(f'Confidence: {conf*100:.2f}%')
+    threshold = 0.60 if args.binary else 0.40
+    is_low_conf = conf < threshold
+
+    print(f'\n{"="*60}')
+    print(f'🔬 INFERENCE RESULT (RESEARCH PROTOTYPE ONLY)')
+    print(f'{"="*60}')
+    if is_low_conf:
+        print(f'STATUS: WARNING - LOW CONFIDENCE')
+        print(f'Prediction: Low-confidence prediction — further review required')
+        print(f'Top candidate: {CLASS_NAMES[pred]} (Confidence: {conf*100:.2f}% < Threshold: {threshold*100:.0f}%)')
+    else:
+        print(f'STATUS: RELIABLE PREDICTION')
+        print(f'Predicted class: {CLASS_NAMES[pred]} (index {pred})')
+        print(f'Confidence: {conf*100:.2f}%')
+        
     print(f'\nProbability distribution:')
     for i, class_name in enumerate(CLASS_NAMES):
         print(f'  {class_name:12s}: {probs[i]*100:6.2f}%')
 
     if args.binary:
-        binary_prob = float(np.sum(probs[1:]))
-        binary_pred = 'Normal' if pred == 0 else 'Abnormal'
+        normal_prob = float(probs[0])
+        abnormal_prob = float(np.sum(probs[1:]))
+        binary_conf = normal_prob if pred == 0 else abnormal_prob
+        binary_low_conf = binary_conf < 0.60
         print(f'\nBinary classification:')
-        print(f'  Prediction: {binary_pred}')
-        print(f'  P(Abnormal) = {binary_prob*100:.2f}%')
-    print(f'{"="*50}\n')
+        if binary_low_conf:
+            print(f'  Prediction: Low-confidence prediction — further review required')
+            print(f'  P(Normal)   = {normal_prob*100:.2f}%')
+            print(f'  P(Abnormal) = {abnormal_prob*100:.2f}%')
+        else:
+            binary_pred = 'Normal' if pred == 0 else 'Abnormal'
+            print(f'  Prediction: {binary_pred}')
+            print(f'  P(Abnormal) = {abnormal_prob*100:.2f}%')
+    print(f'\n⚠️  DISCLAIMER: Research prototype only — not for clinical diagnosis.')
+    print(f'{"="*60}\n')
 
 
 if __name__ == '__main__':

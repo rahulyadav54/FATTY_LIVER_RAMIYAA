@@ -18,25 +18,12 @@ class SiameseNetwork(nn.Module):
         # Projection head for contrastive learning
         self.projection_head = nn.Sequential(
             nn.Linear(2048, 512),
-            nn.BatchNorm1d(512),
             nn.ReLU(),
-            nn.Dropout(0.3),
-            nn.Linear(512, embedding_dim),
-            nn.BatchNorm1d(embedding_dim)
+            nn.Linear(512, embedding_dim)
         )
         
-        # Classification head for downstream task with regularization
-        self.classifier = nn.Sequential(
-            nn.Linear(2048, 512),
-            nn.BatchNorm1d(512),
-            nn.ReLU(),
-            nn.Dropout(0.4),
-            nn.Linear(512, 256),
-            nn.BatchNorm1d(256),
-            nn.ReLU(),
-            nn.Dropout(0.3),
-            nn.Linear(256, 5)  # 5 classes
-        )
+        # Classification head for downstream task
+        self.classifier = nn.Linear(2048, 5)  # 5 classes
         
         self.embedding_dim = embedding_dim
         

@@ -2,14 +2,21 @@ import torch
 import torch.nn as nn
 from torch.utils.data import DataLoader
 import argparse
-from pathlib import Path
 import sys
-from sklearn.metrics import classification_report, confusion_matrix, roc_auc_score
-import numpy as np
+import os
+from pathlib import Path
+if sys.platform == 'win32':
+    try:
+        sys.stdout.reconfigure(encoding='utf-8')
+        sys.stderr.reconfigure(encoding='utf-8')
+    except Exception:
+        pass
 
 # Add project root to path
 sys.path.append(str(Path(__file__).parent.parent))
 
+import numpy as np
+from sklearn.metrics import classification_report, confusion_matrix, roc_auc_score
 from models.siamese_net import SiameseNetwork
 from src.data_loader import get_data_loaders
 
@@ -101,12 +108,12 @@ def main():
         if probs_arr.shape[0] != labels_int.shape[0]:
             raise ValueError(f"mismatch: number of prob rows {probs_arr.shape[0]} != number of labels {labels_int.shape[0]}")
 
-        # Get unique classes in the dataset and filter probs accordingly
         unique_classes = np.unique(labels_int)
         if len(unique_classes) > 1:
             # Only use columns for classes that actually appear in the test set
             probs_filtered = probs_arr[:, unique_classes]
-            roc_auc = roc_auc_score(labels_int, probs_arr, multi_class='ovr', labels=unique_classes)
+            probs_norm = probs_filtered / np.sum(probs_filtered, axis=1, keepdims=True)
+            roc_auc = roc_auc_score(labels_int, probs_norm, multi_class='ovr', labels=unique_classes)
             print(f"ROC-AUC (Multi-class): {roc_auc:.4f}")
         else:
             print("ROC-AUC (Multi-class): Cannot compute for single class")

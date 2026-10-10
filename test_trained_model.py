@@ -3,7 +3,14 @@ Test script to validate trained model performance
 Compares predictions before and after training
 """
 import sys
+import os
 from pathlib import Path
+if sys.platform == 'win32':
+    try:
+        sys.stdout.reconfigure(encoding='utf-8')
+        sys.stderr.reconfigure(encoding='utf-8')
+    except Exception:
+        pass
 sys.path.insert(0, str(Path(__file__).parent))
 
 import torch
@@ -72,9 +79,9 @@ def main():
     
     state = torch.load(model_path, map_location=device)
     if isinstance(state, dict) and 'model' in state:
-        model.load_state_dict(state['model'], strict=False)
+        model.load_state_dict(state['model'], strict=True)
     else:
-        model.load_state_dict(state, strict=False)
+        model.load_state_dict(state, strict=True)
     
     print(f"✅ Model loaded from {model_path}\n")
     

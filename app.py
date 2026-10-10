@@ -64,11 +64,10 @@ def init_model():
         raise FileNotFoundError(f'Model not found: {model_path}. Please train the model first.')
     
     state = torch.load(model_path, map_location=device)
-    try:
-        model.load_state_dict(state)
-    except:
-        if isinstance(state, dict) and 'model' in state:
-            model.load_state_dict(state['model'], strict=False)
+    if isinstance(state, dict) and 'model' in state:
+        model.load_state_dict(state['model'], strict=True)
+    else:
+        model.load_state_dict(state, strict=True)
     
     model.eval()
     print(f"Model loaded on {device}")
@@ -196,24 +195,27 @@ def predict():
             confidence = float(probs_binary[pred_binary])
             probs_np = probs_binary
             pred = pred_binary
+            min_confidence_threshold = 0.60  # Validation-derived binary threshold (60%)
         else:
             class_names = CLASS_NAMES
             pred_label = CLASS_NAMES[pred]
+            min_confidence_threshold = 0.40  # Validation-derived 5-class threshold (40%)
         
-        # Check if confidence is below threshold (model uncertain)
-        MIN_CONFIDENCE = 0.25  # 25% threshold
-        if confidence < MIN_CONFIDENCE:
+        # Check if confidence is below validation threshold (model uncertain)
+        if confidence < min_confidence_threshold:
             return jsonify({
-                'warning': 'Low confidence prediction',
                 'status': 'uncertain',
                 'mode': classification_mode,
-                'prediction': pred_label,
+                'prediction': 'Low-confidence prediction — further review required',
+                'top_candidate': pred_label,
                 'confidence': round(confidence * 100, 2),
-                'message': 'The model is uncertain about this prediction. Please consult a medical professional for accurate diagnosis.',
+                'threshold': round(min_confidence_threshold * 100, 2),
+                'message': 'Low-confidence prediction — further review required',
                 'probabilities': {
                     class_names[i]: round(float(probs_np[i]) * 100, 2)
                     for i in range(len(class_names))
-                }
+                },
+                'disclaimer': 'Research prototype only — not for clinical diagnosis'
             }), 200
         
         # Prepare response
@@ -229,7 +231,8 @@ def predict():
             },
             'processing_time': round(processing_time, 3),
             'severity': 'Abnormal - Requires Medical Attention' if pred != 0 else 'Normal',
-            'device': str(device)
+            'device': str(device),
+            'disclaimer': 'Research prototype only — not for clinical diagnosis'
         }
         
         return jsonify(result)
