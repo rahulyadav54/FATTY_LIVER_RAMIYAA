@@ -3,14 +3,19 @@ import torch.nn as nn
 from torchvision.models import resnet50
 
 class SiameseNetwork(nn.Module):
-    def __init__(self, embedding_dim=128):
+    def __init__(self, embedding_dim=128, pretrained=True):
         super(SiameseNetwork, self).__init__()
-        # Load pre-trained ResNet-50 and modify it
-        try:
-            self.encoder = resnet50(weights='DEFAULT')  # Updated for newer torchvision
-        except:
-            # Fallback for older torchvision versions
-            self.encoder = resnet50(pretrained=True)
+        # Load ResNet-50 backbone
+        if pretrained:
+            try:
+                self.encoder = resnet50(weights='DEFAULT')
+            except Exception:
+                self.encoder = resnet50(pretrained=True)
+        else:
+            try:
+                self.encoder = resnet50(weights=None)
+            except Exception:
+                self.encoder = resnet50(pretrained=False)
         
         # Remove the fully connected layer
         self.encoder = nn.Sequential(*list(self.encoder.children())[:-1])

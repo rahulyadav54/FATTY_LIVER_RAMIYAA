@@ -478,11 +478,16 @@ function runInference() {
   showLoading(true, 'Analyzing ultrasound with Siamese ResNet-50...');
   elements.analyzeBtn.disabled = true;
 
+  const controller = new AbortController();
+  const timeoutId = setTimeout(() => controller.abort(), 90000); // 90-sec timeout for Render free tier
+
   fetch(`${getApiBaseUrl()}/predict`, {
     method: 'POST',
-    body: formData
+    body: formData,
+    signal: controller.signal
   })
     .then(async (response) => {
+      clearTimeout(timeoutId);
       const data = await response.json();
       if (!response.ok || data.error) {
         throw new Error(data.error || 'Server returned an inference error');
@@ -501,9 +506,16 @@ function runInference() {
       showToast(`Inference complete: ${result.prediction}`);
     })
     .catch(err => {
+      clearTimeout(timeoutId);
       showLoading(false);
       elements.analyzeBtn.disabled = false;
-      showToast(err.message, 'error');
+      if (err.name === 'AbortError') {
+        showToast('Inference timed out. Free-tier backend may be spinning up; please retry in a few seconds.', 'error');
+      } else if (err.message && (err.message.includes('Failed to fetch') || err.message.includes('NetworkError'))) {
+        showToast('Backend connection dropped. The server is restarting; please wait 15 seconds and retry.', 'error');
+      } else {
+        showToast(err.message || 'An error occurred during inference.', 'error');
+      }
     });
 }
 

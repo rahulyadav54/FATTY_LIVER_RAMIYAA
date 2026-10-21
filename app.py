@@ -13,6 +13,7 @@ warnings.filterwarnings('ignore')
 try:
     import torch
     import torch.nn.functional as F
+    torch.set_num_threads(1)  # Essential for Render Free Tier (512MB RAM & shared CPU)
 except Exception as e:
     print(f"Warning: PyTorch import issue: {e}")
     import sys
@@ -66,7 +67,7 @@ transform = None
 
 
 def init_model():
-    """Initialize model on first run"""
+    """Initialize model with minimal memory footprint for 512MB RAM constraints"""
     global model, device, transform
     if model is not None:
         return
@@ -74,7 +75,8 @@ def init_model():
     device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
     transform = get_data_transforms(is_train=False)
     
-    model = SiameseNetwork().to(device)
+    # Initialize without allocating duplicate ImageNet weights
+    model = SiameseNetwork(pretrained=False).to(device)
     model_path = 'best_model.pth'
     
     if not Path(model_path).exists():
@@ -86,8 +88,12 @@ def init_model():
     else:
         model.load_state_dict(state, strict=True)
     
+    del state
+    import gc
+    gc.collect()
+    
     model.eval()
-    print(f"Model loaded on {device}")
+    print(f"Model loaded on {device} (512MB RAM optimized)")
 
 
 def is_valid_ultrasound(img_pil):
@@ -233,8 +239,10 @@ def predict():
         
         start_time = time.time()
         
-        # Load image
+        # Load image with size check to protect 512MB RAM
         img = Image.open(io.BytesIO(file.read())).convert('RGB')
+        if max(img.size) > 800:
+            img.thumbnail((800, 800), Image.Resampling.BILINEAR)
         
         # Validate if it's a real ultrasound image
         is_valid, validation_message = is_valid_ultrasound(img)
@@ -247,8 +255,8 @@ def predict():
         # Preprocess
         img_tensor = transform(img).unsqueeze(0).to(device)
         
-        # Inference
-        with torch.no_grad():
+        # High-performance, zero-autograd inference
+        with torch.inference_mode():
             logits = model(img_tensor)
             probs = F.softmax(logits, dim=1)
             probs_np = probs.cpu().numpy()[0]
@@ -431,6 +439,13 @@ def model_info():
         'device': str(device),
         'disclaimer': 'Research prototype only — not approved as an independent clinical diagnostic device.'
     })
+
+
+# Eagerly initialize model on startup to prevent cold-start timeouts on Render
+try:
+    init_model()
+except Exception as e:
+    print(f"Deferred model loading: {e}")
 
 
 if __name__ == '__main__':
