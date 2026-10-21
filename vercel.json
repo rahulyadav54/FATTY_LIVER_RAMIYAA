@@ -1,6 +1,9 @@
 {
   "version": 2,
   "cleanUrls": true,
+  "installCommand": "echo 'Static frontend - skipping python dependencies'",
+  "buildCommand": "echo 'Static build complete'",
+  "outputDirectory": ".",
   "routes": [
     {
       "src": "/static/(.*)",
