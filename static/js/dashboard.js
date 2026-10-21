@@ -489,9 +489,17 @@ function runInference() {
   })
     .then(async (response) => {
       clearTimeout(timeoutId);
-      const data = await response.json();
+      let data;
+      try {
+        data = await response.json();
+      } catch (jsonErr) {
+        if (response.status === 502 || response.status === 503 || response.status === 504) {
+          throw new Error('Render backend is temporarily waking up from sleep or restarting. Please wait 15 seconds and retry.');
+        }
+        throw new Error(`Server returned HTTP ${response.status}`);
+      }
       if (!response.ok || data.error) {
-        throw new Error(data.error || 'Server returned an inference error');
+        throw new Error(data.error || `Server returned an inference error (HTTP ${response.status})`);
       }
       return data;
     })
@@ -511,9 +519,9 @@ function runInference() {
       showLoading(false);
       elements.analyzeBtn.disabled = false;
       if (err.name === 'AbortError') {
-        showToast('Inference timed out. Free-tier backend may be spinning up; please retry in a few seconds.', 'error');
+        showToast('Inference timed out. Free-tier backend may be spinning up from cold start; please retry in 15 seconds.', 'error');
       } else if (err.message && (err.message.includes('Failed to fetch') || err.message.includes('NetworkError'))) {
-        showToast('Backend connection dropped. The server is restarting; please wait 15 seconds and retry.', 'error');
+        showToast('Connection to backend failed. The Render instance may be spinning up from sleep; please wait 15 seconds and retry.', 'error');
       } else {
         showToast(err.message || 'An error occurred during inference.', 'error');
       }

@@ -41,6 +41,8 @@ class SiameseNetwork(nn.Module):
     def forward(self, x1, x2=None):
         # If two inputs, return embeddings for contrastive loss
         if x2 is not None:
+            if self.projection_head is None:
+                raise RuntimeError("projection_head is disabled in production inference mode.")
             emb1 = self.forward_once(x1)
             emb2 = self.forward_once(x2)
             proj1 = self.projection_head(emb1)

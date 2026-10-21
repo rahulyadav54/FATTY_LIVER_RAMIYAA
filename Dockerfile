@@ -31,6 +31,6 @@ USER appuser
 
 EXPOSE 5000 10000 7860
 
-# Run with Gunicorn production WSGI server (1 worker + 2 threads optimized for Render free 512MB RAM)
-CMD ["sh", "-c", "gunicorn --bind 0.0.0.0:${PORT:-5000} --workers 1 --threads 2 --timeout 180 app:app"]
+# Run with Gunicorn production WSGI server (1 worker + 2 threads with gthread worker class optimized for Render free 512MB RAM)
+CMD ["sh", "-c", "gunicorn --bind 0.0.0.0:${PORT:-5000} --workers 1 --threads 2 --timeout 180 --worker-class gthread app:app"]
 
