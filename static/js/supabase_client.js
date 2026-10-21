@@ -1,10 +1,14 @@
 /**
  * Supabase Authentication & Cloud Sync Client
- * Fatty Liver Detection System
+ * Fatty Liver Detection System - Production Configuration
  */
 
 (function (window) {
   'use strict';
+
+  // Production Supabase Project Credentials
+  const DEFAULT_SUPABASE_URL = 'https://vazfzosxwqlakggkmwly.supabase.co';
+  const DEFAULT_SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InZhemZ6b3N4d3FsYWtnZ2ttd2x5Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTI2MDg5MzksImV4cCI6MjEwODE4NDkzOX0.Vw7F_-kK4TtiZMQwXo5_0u8c53WBz927nYqfGKoBme0';
 
   // Local storage keys
   const STORAGE_KEYS = {
@@ -34,16 +38,34 @@
     }
 
     /**
-     * Initialize Supabase client from localStorage or window config
+     * Get backend API base url (Render or localhost)
+     */
+    getBackendUrl() {
+      if (typeof window.getApiBaseUrl === 'function') {
+        return window.getApiBaseUrl();
+      }
+      if (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1') {
+        return '';
+      }
+      return localStorage.getItem('fl_backend_url') || window.BACKEND_API_URL || 'https://fatty-liver-ramiyaa.onrender.com';
+    }
+
+    /**
+     * Initialize Supabase client from localStorage or default credentials
      */
     initClient() {
-      const url = localStorage.getItem(STORAGE_KEYS.URL) || window.SUPABASE_URL || '';
-      const key = localStorage.getItem(STORAGE_KEYS.KEY) || window.SUPABASE_ANON_KEY || '';
+      const url = localStorage.getItem(STORAGE_KEYS.URL) || window.SUPABASE_URL || DEFAULT_SUPABASE_URL;
+      const key = localStorage.getItem(STORAGE_KEYS.KEY) || window.SUPABASE_ANON_KEY || DEFAULT_SUPABASE_ANON_KEY;
 
       if (url && key && window.supabase && typeof window.supabase.createClient === 'function') {
         try {
-          this.client = window.supabase.createClient(url, key);
-          console.log('✅ Supabase client initialized successfully');
+          this.client = window.supabase.createClient(url, key, {
+            auth: {
+              persistSession: true,
+              autoRefreshToken: true
+            }
+          });
+          console.log('✅ Supabase production client initialized successfully');
         } catch (err) {
           console.error('Failed to initialize Supabase client:', err);
           this.client = null;
@@ -75,9 +97,19 @@
      * Check if Supabase keys are configured
      */
     isConfigured() {
-      const url = localStorage.getItem(STORAGE_KEYS.URL);
-      const key = localStorage.getItem(STORAGE_KEYS.KEY);
+      const url = localStorage.getItem(STORAGE_KEYS.URL) || window.SUPABASE_URL || DEFAULT_SUPABASE_URL;
+      const key = localStorage.getItem(STORAGE_KEYS.KEY) || window.SUPABASE_ANON_KEY || DEFAULT_SUPABASE_ANON_KEY;
       return Boolean(url && key);
+    }
+
+    /**
+     * Get active configured URL and Anon Key
+     */
+    getCredentials() {
+      return {
+        url: localStorage.getItem(STORAGE_KEYS.URL) || DEFAULT_SUPABASE_URL,
+        key: localStorage.getItem(STORAGE_KEYS.KEY) || DEFAULT_SUPABASE_ANON_KEY
+      };
     }
 
     /**
@@ -107,9 +139,25 @@
         const tempClient = window.supabase.createClient(url.trim(), key.trim());
         const { error } = await tempClient.auth.getSession();
         if (error) throw error;
-        return { success: true, message: 'Connection established successfully!' };
+        return { success: true, message: 'Supabase connection verified successfully!' };
       } catch (err) {
         return { success: false, message: err.message || 'Failed to connect to Supabase.' };
+      }
+    }
+
+    /**
+     * Auto-confirm user via backend helper if needed
+     */
+    async requestAutoConfirm(email) {
+      try {
+        const backend = this.getBackendUrl();
+        await fetch(`${backend}/api/auth/confirm-user`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ email: email })
+        });
+      } catch (e) {
+        console.warn('Auto-confirm attempt notice:', e);
       }
     }
 
@@ -117,12 +165,26 @@
      * Sign In with Email and Password
      */
     async signIn(email, password) {
+      const cleanEmail = email.trim();
+
       // If client is configured, authenticate via Supabase Auth
       if (this.client) {
-        const { data, error } = await this.client.auth.signInWithPassword({
-          email: email.trim(),
+        let { data, error } = await this.client.auth.signInWithPassword({
+          email: cleanEmail,
           password: password
         });
+
+        // If email confirmation is required, auto-confirm via backend and retry
+        if (error && (error.message.includes('not confirmed') || error.status === 400)) {
+          console.info('Requesting auto-confirmation for clinician account...');
+          await this.requestAutoConfirm(cleanEmail);
+          const retry = await this.client.auth.signInWithPassword({
+            email: cleanEmail,
+            password: password
+          });
+          data = retry.data;
+          error = retry.error;
+        }
 
         if (error) {
           throw error;
@@ -137,28 +199,31 @@
         return { user: data.user, isDemo: false };
       }
 
-      // If not configured, check if user requested demo credentials
-      if (email.toLowerCase().includes('demo') || email.toLowerCase().includes('doctor') || email.toLowerCase().includes('admin')) {
+      // Quick Demo fallback
+      if (cleanEmail.toLowerCase().includes('demo') || cleanEmail.toLowerCase().includes('doctor') || cleanEmail.toLowerCase().includes('admin')) {
         return this.signInDemo();
       }
 
-      throw new Error('Supabase credentials not configured yet. Click "Configure Supabase" below or use "Quick Clinician Demo Access".');
+      throw new Error('Supabase credentials not configured yet.');
     }
 
     /**
-     * Sign Up / Register new account
+     * Sign Up / Register new clinician account
      */
     async signUp(email, password, fullName, role = 'Radiologist') {
       if (!this.client) {
-        throw new Error('Supabase not configured. Click "Configure Supabase" to add your Project URL and Anon Key.');
+        throw new Error('Supabase client not initialized.');
       }
 
+      const cleanEmail = email.trim();
+      const cleanName = fullName.trim();
+
       const { data, error } = await this.client.auth.signUp({
-        email: email.trim(),
+        email: cleanEmail,
         password: password,
         options: {
           data: {
-            full_name: fullName.trim(),
+            full_name: cleanName,
             role: role
           }
         }
@@ -166,6 +231,28 @@
 
       if (error) {
         throw error;
+      }
+
+      // Auto-confirm user account so clinician can immediately use system
+      await this.requestAutoConfirm(cleanEmail);
+
+      // Attempt auto-login
+      try {
+        const loginRes = await this.client.auth.signInWithPassword({
+          email: cleanEmail,
+          password: password
+        });
+        if (loginRes.data && loginRes.data.user) {
+          this.currentUser = loginRes.data.user;
+          this.isDemoMode = false;
+          localStorage.setItem(STORAGE_KEYS.USER, JSON.stringify(loginRes.data.user));
+          if (loginRes.data.session) {
+            localStorage.setItem(STORAGE_KEYS.SESSION, JSON.stringify(loginRes.data.session));
+          }
+          return { user: loginRes.data.user, isDemo: false };
+        }
+      } catch (loginErr) {
+        console.warn('Auto-login notice after signup:', loginErr);
       }
 
       this.currentUser = data.user;
@@ -210,36 +297,139 @@
     }
 
     /**
-     * Sync prediction to Supabase table (if configured and table exists)
+     * Fetch prediction history from Supabase cloud
      */
-    async syncPrediction(predictionData) {
-      if (!this.client || this.isDemoMode || !this.currentUser) {
+    async fetchHistory(limit = 50) {
+      if (!this.client) return [];
+
+      try {
+        let query = this.client
+          .from('patient_predictions')
+          .select('*')
+          .order('created_at', { ascending: false })
+          .limit(limit);
+
+        // Filter by user if authenticated and not in demo mode
+        if (this.currentUser && !this.isDemoMode && this.currentUser.id) {
+          query = query.or(`user_id.eq.${this.currentUser.id},user_id.is.null`);
+        }
+
+        const { data, error } = await query;
+        if (error) {
+          console.info('Supabase cloud history notice:', error.message);
+          return [];
+        }
+
+        return (data || []).map(record => ({
+          id: record.record_id || record.id,
+          timestamp: new Date(record.created_at).toLocaleString(),
+          filename: record.filename || 'ultrasound_scan.jpg',
+          mode: record.mode || 'multiclass',
+          prediction: record.prediction,
+          confidence: Number(record.confidence),
+          severity: record.severity || (record.prediction === 'Normal' ? 'NORMAL' : 'ABNORMAL'),
+          processing_time: record.processing_time || 0.15,
+          isCloud: true,
+          created_at: record.created_at
+        }));
+      } catch (err) {
+        console.warn('Failed to fetch history from Supabase:', err);
+        return [];
+      }
+    }
+
+    /**
+     * Sync prediction to Supabase table (patient_predictions)
+     */
+    async syncPrediction(predictionData, file) {
+      if (!this.client) {
         return false;
       }
 
       try {
-        const { error } = await this.client
+        const userId = (this.currentUser && !this.isDemoMode) ? this.currentUser.id : null;
+        const userEmail = this.currentUser ? this.currentUser.email : 'demo-clinician@hospital.org';
+        const filename = (file && file.name) ? file.name : (predictionData.filename || 'ultrasound_scan.jpg');
+        const recordId = 'FL-' + Date.now().toString(36).toUpperCase();
+
+        const insertPayload = {
+          record_id: recordId,
+          user_id: userId,
+          user_email: userEmail,
+          filename: filename,
+          prediction: predictionData.prediction,
+          confidence: Number(predictionData.confidence),
+          severity: predictionData.severity || (predictionData.prediction === 'Normal' ? 'Normal' : 'Abnormal - Requires Medical Attention'),
+          mode: predictionData.mode || 'multiclass',
+          probabilities: predictionData.probabilities || {},
+          acoustic_profile: predictionData.acoustic_profile || {},
+          mean_echogenicity: predictionData.acoustic_profile ? predictionData.acoustic_profile.mean_echogenicity : null,
+          attenuation_slope: predictionData.acoustic_profile ? predictionData.acoustic_profile.attenuation_slope : null,
+          processing_time: predictionData.processing_time || 0.15,
+          created_at: new Date().toISOString()
+        };
+
+        const { data, error } = await this.client
           .from('patient_predictions')
-          .insert([
-            {
-              user_id: this.currentUser.id,
-              prediction: predictionData.prediction,
-              confidence: predictionData.confidence,
-              severity: predictionData.severity,
-              mode: predictionData.mode,
-              mean_echogenicity: predictionData.acoustic_profile ? predictionData.acoustic_profile.mean_echogenicity : null,
-              attenuation_slope: predictionData.acoustic_profile ? predictionData.acoustic_profile.attenuation_slope : null,
-              created_at: new Date().toISOString()
-            }
-          ]);
+          .insert([insertPayload])
+          .select();
 
         if (error) {
-          console.info('Note: patient_predictions table not found or requires RLS setup in Supabase:', error.message);
+          console.info('Supabase cloud sync notice (run supabase_schema.sql if table is not yet created):', error.message);
+          return false;
+        }
+
+        console.log('☁️ Prediction successfully synced to Supabase cloud:', recordId);
+        return data ? data[0] : true;
+      } catch (err) {
+        console.warn('Sync error:', err);
+        return false;
+      }
+    }
+
+    /**
+     * Delete prediction from Supabase cloud
+     */
+    async deletePrediction(recordId) {
+      if (!this.client) return false;
+
+      try {
+        const { error } = await this.client
+          .from('patient_predictions')
+          .delete()
+          .or(`record_id.eq.${recordId},id.eq.${recordId}`);
+
+        if (error) {
+          console.warn('Delete cloud record notice:', error.message);
           return false;
         }
         return true;
       } catch (err) {
-        console.warn('Sync error:', err);
+        console.warn('Delete cloud record error:', err);
+        return false;
+      }
+    }
+
+    /**
+     * Clear all prediction records for the active user
+     */
+    async clearUserPredictions() {
+      if (!this.client) return false;
+
+      try {
+        let query = this.client.from('patient_predictions').delete();
+        if (this.currentUser && !this.isDemoMode) {
+          query = query.eq('user_id', this.currentUser.id);
+        } else {
+          query = query.is('user_id', null);
+        }
+        const { error } = await query;
+        if (error) {
+          console.warn('Clear predictions cloud notice:', error.message);
+          return false;
+        }
+        return true;
+      } catch (err) {
         return false;
       }
     }

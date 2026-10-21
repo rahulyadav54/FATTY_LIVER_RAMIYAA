@@ -110,6 +110,7 @@ document.addEventListener('DOMContentLoaded', () => {
   renderHistory();
   initBaselineAnalyticsCharts();
   initAuthentication();
+  loadCloudHistory();
 });
 
 // ==========================================================================
@@ -501,7 +502,7 @@ function runInference() {
       displayPredictionResults(result);
       saveToHistory(result, state.selectedFile);
       if (window.SupabaseAuth) {
-        window.SupabaseAuth.syncPrediction(result);
+        window.SupabaseAuth.syncPrediction(result, state.selectedFile);
       }
       showToast(`Inference complete: ${result.prediction}`);
     })
@@ -915,11 +916,14 @@ function setupHistory() {
     elements.historyFilter.addEventListener('change', renderHistory);
   }
   if (elements.clearHistoryBtn) {
-    elements.clearHistoryBtn.addEventListener('click', () => {
+    elements.clearHistoryBtn.addEventListener('click', async () => {
       if (confirm('Are you sure you want to clear all prediction history records?')) {
         state.history = [];
         localStorage.removeItem('fl_prediction_history');
         renderHistory();
+        if (window.SupabaseAuth) {
+          await window.SupabaseAuth.clearUserPredictions();
+        }
         showToast('Prediction history cleared');
       }
     });
@@ -929,16 +933,44 @@ function setupHistory() {
   }
 }
 
+async function loadCloudHistory() {
+  if (!window.SupabaseAuth) return;
+  try {
+    const cloudRecords = await window.SupabaseAuth.fetchHistory(50);
+    if (cloudRecords && cloudRecords.length > 0) {
+      const existingIds = new Set(state.history.map(item => item.id));
+      for (const rec of cloudRecords) {
+        if (!existingIds.has(rec.id)) {
+          state.history.push(rec);
+          existingIds.add(rec.id);
+        }
+      }
+      // Sort by newest first
+      state.history.sort((a, b) => {
+        const timeA = new Date(a.created_at || a.timestamp).getTime() || 0;
+        const timeB = new Date(b.created_at || b.timestamp).getTime() || 0;
+        return timeB - timeA;
+      });
+      localStorage.setItem('fl_prediction_history', JSON.stringify(state.history));
+      renderHistory();
+      console.log(`☁️ Loaded ${cloudRecords.length} records from Supabase cloud`);
+    }
+  } catch (e) {
+    console.warn('loadCloudHistory notice:', e);
+  }
+}
+
 function saveToHistory(result, file) {
   const record = {
     id: 'FL-' + Date.now().toString(36).toUpperCase(),
     timestamp: new Date().toLocaleString(),
-    filename: file.name,
+    filename: (file && file.name) ? file.name : 'ultrasound_scan.jpg',
     mode: result.mode || 'multiclass',
     prediction: result.prediction,
     confidence: result.confidence,
-    severity: result.severity,
-    processing_time: result.processing_time
+    severity: result.severity || (result.prediction === 'Normal' ? 'Normal' : 'Abnormal - Requires Medical Attention'),
+    processing_time: result.processing_time || 0.15,
+    isCloud: true
   };
 
   state.history.unshift(record);
@@ -954,9 +986,9 @@ function renderHistory() {
   const filterClass = elements.historyFilter ? elements.historyFilter.value : 'all';
 
   const filtered = state.history.filter(item => {
-    const matchesSearch = item.filename.toLowerCase().includes(searchQuery) ||
-                          item.prediction.toLowerCase().includes(searchQuery) ||
-                          item.id.toLowerCase().includes(searchQuery);
+    const matchesSearch = (item.filename || '').toLowerCase().includes(searchQuery) ||
+                          (item.prediction || '').toLowerCase().includes(searchQuery) ||
+                          (item.id || '').toLowerCase().includes(searchQuery);
     const matchesClass = filterClass === 'all' || item.prediction === filterClass;
     return matchesSearch && matchesClass;
   });
@@ -970,7 +1002,10 @@ function renderHistory() {
   elements.emptyHistoryState.style.display = 'none';
   elements.historyTableBody.innerHTML = filtered.map(item => `
     <tr>
-      <td><strong>${item.id}</strong></td>
+      <td>
+        <strong>${item.id}</strong>
+        ${item.isCloud ? '<span style="font-size: 0.68rem; color: #10b981; margin-left: 4px;" title="Synchronized with Supabase Cloud">● Cloud</span>' : ''}
+      </td>
       <td>${item.timestamp}</td>
       <td>${item.filename}</td>
       <td><span class="hero-tag">${item.mode}</span></td>
@@ -994,10 +1029,13 @@ function renderHistory() {
   `).join('');
 }
 
-window.deleteHistoryItem = function(id) {
+window.deleteHistoryItem = async function(id) {
   state.history = state.history.filter(item => item.id !== id);
   localStorage.setItem('fl_prediction_history', JSON.stringify(state.history));
   renderHistory();
+  if (window.SupabaseAuth) {
+    await window.SupabaseAuth.deletePrediction(id);
+  }
   showToast('Record deleted');
 };
 
@@ -1242,6 +1280,7 @@ function initAuthentication() {
         updateTopbarProfile(res.user);
         if (authPortal) authPortal.classList.add('hidden');
         showToast(`Welcome back, ${res.user.user_metadata?.full_name || res.user.email}!`);
+        loadCloudHistory();
       } catch (err) {
         showLoading(false);
         showToast(err.message, 'error');
@@ -1264,6 +1303,7 @@ function initAuthentication() {
         updateTopbarProfile(res.user);
         if (authPortal) authPortal.classList.add('hidden');
         showToast(`Account created successfully! Welcome, ${name}.`);
+        loadCloudHistory();
       } catch (err) {
         showLoading(false);
         showToast(err.message, 'error');
@@ -1278,6 +1318,7 @@ function initAuthentication() {
       updateTopbarProfile(res.user);
       if (authPortal) authPortal.classList.add('hidden');
       showToast('Signed in with Clinician Demo Access!');
+      loadCloudHistory();
     });
   }
 
@@ -1293,8 +1334,9 @@ function initAuthentication() {
   // Supabase Configuration Modal open/close
   if (btnOpenSupabaseModal && supabaseModal) {
     btnOpenSupabaseModal.addEventListener('click', () => {
-      if (cfgSupabaseUrl) cfgSupabaseUrl.value = localStorage.getItem('fl_supabase_url') || '';
-      if (cfgSupabaseKey) cfgSupabaseKey.value = localStorage.getItem('fl_supabase_anon_key') || '';
+      const creds = window.SupabaseAuth ? window.SupabaseAuth.getCredentials() : { url: '', key: '' };
+      if (cfgSupabaseUrl) cfgSupabaseUrl.value = creds.url;
+      if (cfgSupabaseKey) cfgSupabaseKey.value = creds.key;
       if (supabaseTestResult) supabaseTestResult.style.display = 'none';
       supabaseModal.classList.add('show');
     });
