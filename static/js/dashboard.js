@@ -1023,7 +1023,10 @@ function exportHistoryToCsv() {
 // ==========================================================================
 function fetchSystemStatus() {
   fetch(`${getApiBaseUrl()}/api/status`)
-    .then(res => res.json())
+    .then(res => {
+      if (!res.ok) throw new Error(`HTTP ${res.status}`);
+      return res.json();
+    })
     .then(data => {
       if (elements.topbarStatusText) {
         elements.topbarStatusText.textContent = `Siamese ResNet-50 • ${data.device.toUpperCase()}`;
@@ -1034,8 +1037,9 @@ function fetchSystemStatus() {
     })
     .catch(() => {
       if (elements.topbarStatusText) {
-        elements.topbarStatusText.textContent = 'Server Offline';
+        elements.topbarStatusText.textContent = 'Connecting...';
       }
+      setTimeout(fetchSystemStatus, 4000);
     });
 }
 
