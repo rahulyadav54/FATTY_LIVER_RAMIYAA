@@ -2,6 +2,12 @@
 
 This repository provides an end-to-end deep learning framework for detecting and classifying fatty liver disease (steatosis) from B-mode ultrasound images using a **Siamese Neural Network (SNN)** with pre-trained **ResNet-50** backbone and self-supervised **contrastive pre-training**.
 
+### 🌐 Live Production Deployments
+- **Official Custom Domain**: [https://livercare.zayacodehub.in](https://livercare.zayacodehub.in)
+- **Vercel Frontend**: [https://fatty-liver-gamma.vercel.app](https://fatty-liver-gamma.vercel.app)
+- **Render Backend API**: [https://fatty-liver-ramiyaa.onrender.com](https://fatty-liver-ramiyaa.onrender.com)
+- **Copy-Paste Deployment & Domain Setup Guide**: See [DEPLOYMENT_CONFIG_README.md](file:///c:/PROJECTS/FATTY%20LIVER%20DETECTION%20SYSTEM/FATTY_LIVER_RAMIYAA/DEPLOYMENT_CONFIG_README.md) for all environment variables, DNS records, and Supabase settings.
+
 ---
 
 ## 📌 Executive Summary & Audit Findings
