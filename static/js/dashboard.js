@@ -1630,7 +1630,9 @@ function setupA4Report() {
   if (btnCloseA4Report && a4Modal) {
     btnCloseA4Report.addEventListener('click', () => a4Modal.classList.remove('show'));
     a4Modal.addEventListener('click', (e) => {
-      if (e.target === a4Modal) a4Modal.classList.remove('show');
+      if (e.target === a4Modal || e.target.id === 'a4DocumentViewport') {
+        a4Modal.classList.remove('show');
+      }
     });
   }
 

@@ -101,6 +101,7 @@
 html {
   font-size: 16px;
   scroll-behavior: smooth;
+  overflow-x: hidden;
 }
 
 body {
@@ -111,6 +112,7 @@ body {
   -webkit-font-smoothing: antialiased;
   min-height: 100vh;
   display: flex;
+  overflow-x: hidden;
 }
 
 /* App Wrapper Layout */
@@ -2783,22 +2785,23 @@ input:checked + .toggle-slider:before {
 }
 
 /* ==========================================================================
-   A4 Medical Report Modal & Printable Layout
+   A4 Medical Report Modal & Document Viewport Layout
    ========================================================================== */
 .a4-modal-overlay {
   position: fixed;
   inset: 0;
   z-index: 10005;
-  background: rgba(15, 23, 42, 0.85);
-  backdrop-filter: blur(10px);
+  background: rgba(11, 19, 41, 0.88);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
   display: flex;
-  flex-direction: column;
   align-items: center;
-  padding: 20px;
-  overflow-y: auto;
+  justify-content: center;
+  padding: 16px;
+  box-sizing: border-box;
   opacity: 0;
   visibility: hidden;
-  transition: opacity 0.3s ease, visibility 0.3s ease;
+  transition: opacity 0.25s ease, visibility 0.25s ease;
 }
 
 .a4-modal-overlay.show {
@@ -2806,37 +2809,57 @@ input:checked + .toggle-slider:before {
   visibility: visible;
 }
 
-.a4-modal-toolbar {
+.a4-modal-dialog {
   width: 100%;
-  max-width: 210mm;
+  max-width: 980px;
+  height: 94vh;
+  max-height: 940px;
+  background: #0f172a;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 14px;
+  box-shadow: 0 25px 60px -10px rgba(0, 0, 0, 0.8), 0 0 0 1px rgba(255, 255, 255, 0.05);
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  transform: scale(0.97);
+  transition: transform 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.a4-modal-overlay.show .a4-modal-dialog {
+  transform: scale(1);
+}
+
+.a4-modal-toolbar {
+  flex-shrink: 0;
+  height: 56px;
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 12px 18px;
-  background: #1e293b;
+  padding: 0 20px;
+  background: #090e1a;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
   color: #ffffff;
-  border-radius: var(--radius-md) var(--radius-md) 0 0;
-  box-shadow: var(--shadow-lg);
-  position: sticky;
-  top: 0;
-  z-index: 10;
+  z-index: 5;
 }
 
 .a4-toolbar-title {
   display: flex;
   align-items: center;
   gap: 10px;
-  font-size: 0.9rem;
+  font-size: 0.92rem;
   font-weight: 700;
+  color: #f8fafc;
 }
 
 .a4-format-badge {
   font-size: 0.68rem;
-  background: rgba(36, 120, 243, 0.3);
+  background: rgba(36, 120, 243, 0.25);
   color: #60a5fa;
+  border: 1px solid rgba(96, 165, 250, 0.3);
   padding: 2px 8px;
   border-radius: 4px;
   font-weight: 600;
+  letter-spacing: 0.03em;
 }
 
 .a4-toolbar-actions {
@@ -2849,103 +2872,128 @@ input:checked + .toggle-slider:before {
   display: flex;
   align-items: center;
   gap: 6px;
-  background: var(--primary);
+  background: #2563eb;
   color: #ffffff;
   border: none;
   padding: 8px 16px;
-  border-radius: var(--radius-sm);
+  border-radius: 6px;
   font-size: 0.82rem;
   font-weight: 600;
   cursor: pointer;
-  transition: background 0.2s;
+  transition: background 0.2s, transform 0.1s;
 }
 
 .btn-a4-print:hover {
-  background: var(--primary-hover);
+  background: #1d4ed8;
 }
 
 .btn-a4-download {
   display: flex;
   align-items: center;
   gap: 6px;
-  background: #334155;
-  color: #f1f5f9;
-  border: 1px solid #475569;
+  background: #1e293b;
+  color: #e2e8f0;
+  border: 1px solid #334155;
   padding: 8px 14px;
-  border-radius: var(--radius-sm);
+  border-radius: 6px;
   font-size: 0.82rem;
   font-weight: 600;
   cursor: pointer;
-  transition: background 0.2s;
+  transition: background 0.2s, border-color 0.2s;
 }
 
 .btn-a4-download:hover {
-  background: #475569;
+  background: #334155;
+  border-color: #475569;
 }
 
 .btn-a4-close {
   background: transparent;
   border: none;
   color: #94a3b8;
-  font-size: 1.3rem;
+  font-size: 1.5rem;
+  line-height: 1;
   cursor: pointer;
   padding: 4px 8px;
   display: flex;
   align-items: center;
   justify-content: center;
+  border-radius: 6px;
+  transition: color 0.15s, background 0.15s;
 }
 
 .btn-a4-close:hover {
   color: #ffffff;
+  background: rgba(255, 255, 255, 0.1);
 }
 
-/* The actual A4 Sheet representation */
+/* Document canvas / viewport */
+.a4-document-viewport {
+  flex: 1;
+  overflow-y: auto;
+  overflow-x: hidden;
+  background: #1e293b;
+  padding: 24px 16px 40px 16px;
+  display: flex;
+  justify-content: center;
+  align-items: flex-start;
+  box-sizing: border-box;
+  width: 100%;
+}
+
+/* Authentic ISO A4 Sheet Representation (210mm x 297mm) */
 .a4-report-sheet {
   width: 210mm;
+  max-width: 100%;
   min-height: 297mm;
-  padding: 16mm 18mm;
-  background: #ffffff;
-  color: #0f172a;
+  height: auto;
+  flex-shrink: 0;
+  padding: 9mm 13mm;
+  background: #ffffff !important;
+  color: #0f172a !important;
   font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-  box-shadow: 0 15px 50px rgba(0, 0, 0, 0.25);
+  box-shadow: 0 15px 45px rgba(0, 0, 0, 0.45);
   box-sizing: border-box;
-  border-radius: 0 0 var(--radius-md) var(--radius-md);
-  margin-bottom: 40px;
+  border-radius: 4px;
+  margin: 0 auto;
   position: relative;
+  overflow: visible;
+  line-height: 1.32;
 }
 
 .report-header {
   display: flex;
-  align-items: flex-start;
+  align-items: center;
   justify-content: space-between;
   border-bottom: 2px solid #0f172a;
-  padding-bottom: 12px;
-  margin-bottom: 14px;
+  padding-bottom: 6px;
+  margin-bottom: 6px;
 }
 
 .report-brand {
   display: flex;
   align-items: center;
-  gap: 14px;
+  gap: 12px;
 }
 
 .report-logo-img {
-  width: 44px;
-  height: 44px;
-  border-radius: 8px;
+  width: 38px;
+  height: 38px;
+  border-radius: 6px;
   object-fit: cover;
 }
 
 .report-facility-name {
-  font-size: 1.05rem;
+  font-size: 0.98rem;
   font-weight: 800;
   color: #0f172a;
   letter-spacing: -0.01em;
+  line-height: 1.15;
 }
 
 .report-department-name {
-  font-size: 0.75rem;
-  font-weight: 600;
+  font-size: 0.68rem;
+  font-weight: 700;
   color: #475569;
   text-transform: uppercase;
   letter-spacing: 0.05em;
@@ -2954,8 +3002,9 @@ input:checked + .toggle-slider:before {
 
 .report-meta-box {
   text-align: right;
-  font-size: 0.72rem;
+  font-size: 0.68rem;
   color: #475569;
+  line-height: 1.25;
 }
 
 .report-id-badge {
@@ -2963,46 +3012,46 @@ input:checked + .toggle-slider:before {
   background: #0f172a;
   color: #ffffff;
   font-weight: 700;
-  font-size: 0.75rem;
-  padding: 3px 8px;
-  border-radius: 4px;
-  margin-bottom: 4px;
+  font-size: 0.68rem;
+  padding: 2px 7px;
+  border-radius: 3px;
+  margin-bottom: 3px;
   letter-spacing: 0.05em;
 }
 
 .report-doc-title {
   text-align: center;
-  font-size: 1.15rem;
+  font-size: 0.95rem;
   font-weight: 900;
   color: #1e3a8a;
   text-transform: uppercase;
-  letter-spacing: 0.06em;
-  margin: 10px 0 14px 0;
-  padding: 6px;
+  letter-spacing: 0.05em;
+  margin: 5px 0 7px 0;
+  padding: 4px;
   background: #eff6ff;
-  border-radius: 6px;
+  border-radius: 4px;
   border: 1px solid #bfdbfe;
 }
 
 .report-patient-table {
   width: 100%;
   border-collapse: collapse;
-  margin-bottom: 14px;
-  font-size: 0.78rem;
+  margin-bottom: 7px;
+  font-size: 0.72rem;
 }
 
 .report-patient-table th {
   background: #f8fafc;
   color: #475569;
-  font-weight: 600;
+  font-weight: 700;
   text-align: left;
-  padding: 6px 10px;
+  padding: 3.5px 7px;
   border: 1px solid #cbd5e1;
-  width: 18%;
+  width: 16%;
 }
 
 .report-patient-table td {
-  padding: 6px 10px;
+  padding: 3.5px 7px;
   border: 1px solid #cbd5e1;
   color: #0f172a;
   font-weight: 500;
@@ -3010,20 +3059,20 @@ input:checked + .toggle-slider:before {
 
 .report-diagnosis-grid {
   display: grid;
-  grid-template-columns: 190px 1fr;
-  gap: 16px;
-  margin-bottom: 14px;
+  grid-template-columns: 140px 1fr;
+  gap: 12px;
+  margin-bottom: 7px;
   background: #f8fafc;
   border: 1px solid #cbd5e1;
-  border-radius: 8px;
-  padding: 12px;
+  border-radius: 6px;
+  padding: 7px 10px;
 }
 
 .report-scan-box {
-  width: 190px;
-  height: 145px;
+  width: 140px;
+  height: 105px;
   border: 1px solid #94a3b8;
-  border-radius: 6px;
+  border-radius: 4px;
   overflow: hidden;
   background: #000;
   display: flex;
@@ -3045,12 +3094,12 @@ input:checked + .toggle-slider:before {
 
 .report-finding-badge {
   display: inline-block;
-  font-size: 1.25rem;
+  font-size: 1.1rem;
   font-weight: 900;
-  padding: 4px 14px;
-  border-radius: 6px;
+  padding: 3px 12px;
+  border-radius: 5px;
   color: #ffffff;
-  margin-bottom: 6px;
+  margin-bottom: 3px;
   width: fit-content;
 }
 
@@ -3062,9 +3111,9 @@ input:checked + .toggle-slider:before {
 
 .report-metrics-row {
   display: flex;
-  gap: 18px;
-  font-size: 0.8rem;
-  margin: 6px 0;
+  gap: 14px;
+  font-size: 0.72rem;
+  margin: 3px 0;
   color: #334155;
 }
 
@@ -3073,41 +3122,41 @@ input:checked + .toggle-slider:before {
 }
 
 .report-impression-text {
-  font-size: 0.8rem;
-  line-height: 1.45;
+  font-size: 0.71rem;
+  line-height: 1.32;
   color: #334155;
-  margin-top: 4px;
+  margin-top: 2px;
 }
 
 .report-section-heading {
-  font-size: 0.85rem;
+  font-size: 0.76rem;
   font-weight: 800;
   color: #0f172a;
   text-transform: uppercase;
-  letter-spacing: 0.05em;
+  letter-spacing: 0.04em;
   border-bottom: 1px solid #cbd5e1;
-  padding-bottom: 4px;
-  margin: 12px 0 8px 0;
+  padding-bottom: 2px;
+  margin: 7px 0 4px 0;
 }
 
 .report-table {
   width: 100%;
   border-collapse: collapse;
-  font-size: 0.74rem;
-  margin-bottom: 12px;
+  font-size: 0.69rem;
+  margin-bottom: 7px;
 }
 
 .report-table th {
   background: #f1f5f9;
   font-weight: 700;
   color: #1e293b;
-  padding: 6px 8px;
+  padding: 3.5px 6px;
   border: 1px solid #cbd5e1;
   text-align: left;
 }
 
 .report-table td {
-  padding: 5px 8px;
+  padding: 3px 6px;
   border: 1px solid #cbd5e1;
   color: #334155;
 }
@@ -3117,63 +3166,67 @@ input:checked + .toggle-slider:before {
   font-weight: 700;
 }
 
+.report-table tr.winner-row td {
+  color: #1e3a8a;
+}
+
 .report-prob-track {
-  width: 100px;
-  height: 8px;
+  width: 70px;
+  height: 6px;
   background: #e2e8f0;
-  border-radius: 4px;
+  border-radius: 3px;
   overflow: hidden;
   display: inline-block;
   vertical-align: middle;
-  margin-left: 8px;
+  margin-left: 6px;
 }
 
 .report-prob-bar {
   height: 100%;
   background: #2563eb;
-  border-radius: 4px;
+  border-radius: 3px;
 }
 
 .report-recommendations-box {
   background: #f8fafc;
   border: 1px solid #cbd5e1;
-  border-radius: 6px;
-  padding: 10px 14px;
-  font-size: 0.78rem;
+  border-radius: 5px;
+  padding: 6px 10px;
+  font-size: 0.70rem;
   color: #334155;
-  line-height: 1.5;
-  margin-bottom: 14px;
+  line-height: 1.35;
+  margin-bottom: 7px;
 }
 
 .report-recommendations-box ol {
-  margin: 6px 0 0 18px;
+  margin: 2px 0 0 16px;
   padding: 0;
 }
 
 .report-recommendations-box li {
-  margin-bottom: 3px;
+  margin-bottom: 1.5px;
 }
 
 .report-signatures {
   display: flex;
   align-items: flex-end;
   justify-content: space-between;
-  margin-top: 18px;
-  padding-top: 12px;
+  margin-top: 8px;
+  padding-top: 6px;
   border-top: 1px solid #cbd5e1;
 }
 
 .report-qr-stamp {
   display: flex;
   align-items: center;
-  gap: 10px;
+  gap: 8px;
 }
 
 .qr-box {
-  width: 48px;
-  height: 48px;
+  width: 38px;
+  height: 38px;
   border: 1px solid #94a3b8;
-  padding: 3px;
+  padding: 2px;
   border-radius: 4px;
   background: #fff;
 }
@@ -3184,9 +3237,9 @@ input:checked + .toggle-slider:before {
 }
 
 .qr-stamp-text {
-  font-size: 0.68rem;
+  font-size: 0.62rem;
   color: #64748b;
-  line-height: 1.3;
+  line-height: 1.25;
 }
 
 .report-doctor-sig {
@@ -3194,40 +3247,44 @@ input:checked + .toggle-slider:before {
 }
 
 .doctor-sig-line {
-  width: 180px;
+  width: 160px;
   border-bottom: 1px solid #0f172a;
-  margin-bottom: 6px;
+  margin-bottom: 3px;
+  margin-left: auto;
 }
 
 .doctor-sig-name {
-  font-size: 0.85rem;
+  font-size: 0.78rem;
   font-weight: 800;
   color: #0f172a;
+  line-height: 1.15;
 }
 
 .doctor-sig-role {
-  font-size: 0.72rem;
+  font-size: 0.65rem;
   color: #64748b;
 }
 
 .report-footer-notice {
-  font-size: 0.65rem;
+  font-size: 0.60rem;
   color: #94a3b8;
   text-align: center;
-  margin-top: 16px;
+  margin-top: 6px;
   border-top: 1px dashed #e2e8f0;
-  padding-top: 6px;
+  padding-top: 3px;
 }
 
 /* ==========================================================================
    PRINT STYLES FOR A4 MEDICAL REPORT
    ========================================================================== */
 @media print {
-  body {
+  html, body {
     background: #ffffff !important;
     color: #000000 !important;
     margin: 0 !important;
     padding: 0 !important;
+    height: auto !important;
+    overflow: visible !important;
   }
 
   /* Hide app navigation and all other views */
@@ -3238,7 +3295,8 @@ input:checked + .toggle-slider:before {
   .modal-backdrop,
   .loading-overlay,
   .toast,
-  .a4-modal-toolbar {
+  .a4-modal-toolbar,
+  .a4-document-viewport::-webkit-scrollbar {
     display: none !important;
   }
 
@@ -3248,17 +3306,40 @@ input:checked + .toggle-slider:before {
     margin: 0 !important;
     padding: 0 !important;
     display: block !important;
+    height: auto !important;
+    overflow: visible !important;
   }
 
   .a4-modal-overlay {
     position: static !important;
-    background: #ffffff !important;
+    background: transparent !important;
     padding: 0 !important;
     margin: 0 !important;
     overflow: visible !important;
     display: block !important;
     opacity: 1 !important;
     visibility: visible !important;
+    backdrop-filter: none !important;
+    -webkit-backdrop-filter: none !important;
+  }
+
+  .a4-modal-dialog {
+    max-width: 100% !important;
+    height: auto !important;
+    max-height: none !important;
+    background: transparent !important;
+    border: none !important;
+    border-radius: 0 !important;
+    box-shadow: none !important;
+    overflow: visible !important;
+    transform: none !important;
+  }
+
+  .a4-document-viewport {
+    background: transparent !important;
+    padding: 0 !important;
+    overflow: visible !important;
+    display: block !important;
   }
 
   .a4-report-sheet {
@@ -3266,15 +3347,19 @@ input:checked + .toggle-slider:before {
     max-width: 100% !important;
     min-height: auto !important;
     margin: 0 !important;
-    padding: 10mm 15mm !important;
+    padding: 6mm 8mm !important;
     box-shadow: none !important;
     border: none !important;
+    border-radius: 0 !important;
     page-break-after: avoid !important;
+    page-break-inside: avoid !important;
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
   }
 
   @page {
     size: A4 portrait;
-    margin: 8mm 10mm;
+    margin: 6mm 8mm;
   }
 }
 
