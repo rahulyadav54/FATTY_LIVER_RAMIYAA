@@ -12,8 +12,8 @@ function getApiBaseUrl() {
   if (savedUrl) {
     return savedUrl.replace(/\/$/, '');
   }
-  // Default to Render web service URL (replace with your exact service name if different)
-  return 'https://fatty-liver-ai-dashboard.onrender.com';
+  // Connect to live Render backend
+  return 'https://fatty-liver-ramiyaa.onrender.com';
 }
 
 // Application State
