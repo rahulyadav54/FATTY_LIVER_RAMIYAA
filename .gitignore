@@ -5,7 +5,10 @@ __pycache__/
 
 # PyTorch checkpoints / dynamic files
 *.pth.backup
+*.pth.prev
+best_model_multisource.pth
 *.log
+scratch/
 
 # OS / Editor files
 .DS_Store

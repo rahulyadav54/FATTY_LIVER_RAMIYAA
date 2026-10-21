@@ -187,6 +187,34 @@ def main():
     criterion = nn.CrossEntropyLoss(weight=class_weights)
     train_classification(model, train_loader, val_loader, optimizer, criterion, device, args.epochs, args.save_path)
 
+    # Final evaluation on held-out test dataset
+    print("\n🔍 Evaluating best model on held-out test dataset...")
+    if Path(args.save_path).exists():
+        model.load_state_dict(torch.load(args.save_path, map_location=device))
+    model.eval()
+    test_correct = 0
+    test_total = 0
+    all_preds, all_targets = [], []
+    with torch.no_grad():
+        for images, labels in test_loader:
+            images, labels = images.to(device), labels.to(device)
+            outputs = model(images)
+            _, predicted = outputs.max(1)
+            test_total += labels.size(0)
+            test_correct += predicted.eq(labels).sum().item()
+            all_preds.extend(predicted.cpu().numpy())
+            all_targets.extend(labels.cpu().numpy())
+    test_acc = 100. * test_correct / max(test_total, 1)
+    print(f"✅ Final Test Accuracy: {test_acc:.2f}% ({test_correct}/{test_total} test scans)")
+
+    class_names = ['Normal', 'Grade-I', 'Grade-II', 'Grade-III', 'CLD']
+    all_preds, all_targets = np.array(all_preds), np.array(all_targets)
+    for c_idx, c_name in enumerate(class_names):
+        mask = (all_targets == c_idx)
+        if mask.sum() > 0:
+            c_acc = (all_preds[mask] == all_targets[mask]).mean() * 100
+            print(f"   {c_name:10} | Test Accuracy: {c_acc:6.2f}% | Samples: {mask.sum():2}")
+
     print("\nTraining completed successfully!")
 
 if __name__ == '__main__':

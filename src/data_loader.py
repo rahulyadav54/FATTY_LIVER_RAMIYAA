@@ -24,8 +24,11 @@ class FattyLiverDataset(Dataset):
 
         # Check if .mat file exists
         mat_file = self.data_dir / 'dataset_liver_bmodes_steatosis_assessment_IJCARS.mat'
+        if not mat_file.exists():
+            mat_file = Path('data') / 'dataset_liver_bmodes_steatosis_assessment_IJCARS.mat'
+
         if mat_file.exists():
-            # Load from .mat file
+            # Load from .mat file (original clinical benchmark dataset)
             self.load_from_mat(mat_file)
         else:
             # Load from image folders
@@ -37,6 +40,33 @@ class FattyLiverDataset(Dataset):
                         self.labels.append(self.class_to_idx[class_name])
                         # Synthetic/folder patient ID based on index
                         self.patient_ids.append(f"{class_name}_{idx // 10}")
+
+        # Augment with verified clinical ultrasound images from Kaggle dataset
+        self._load_kaggle_augmentation()
+
+    def _load_kaggle_augmentation(self):
+        """Augment with verified clinical ultrasound images from Kaggle dataset without replacing existing data"""
+        kaggle_base = Path(os.path.expanduser(r"~/.cache/kagglehub/datasets/orvile/annotated-ultrasound-liver-images-dataset/versions/2/7272660"))
+        if not kaggle_base.exists():
+            return
+
+        # 1. 100 Normal clinical ultrasound images to boost Normal class
+        normal_dir = kaggle_base / 'Normal' / 'Normal' / 'image'
+        if normal_dir.exists():
+            for idx, fpath in enumerate(sorted(normal_dir.glob('*.jpg'))):
+                self.image_paths.append(fpath)
+                self.labels.append(0)  # Normal
+                self.patient_ids.append(f"kaggle_normal_{idx}")
+
+        # 2. 100 Chronic liver disease scans to boost CLD class
+        benign_dir = kaggle_base / 'Benign' / 'Benign' / 'image'
+        malignant_dir = kaggle_base / 'Malignant' / 'Malignant' / 'image'
+        if benign_dir.exists() and malignant_dir.exists():
+            cld_scans = sorted(list(benign_dir.glob('*.jpg')))[:50] + sorted(list(malignant_dir.glob('*.jpg')))[:50]
+            for idx, fpath in enumerate(cld_scans):
+                self.image_paths.append(fpath)
+                self.labels.append(4)  # CLD
+                self.patient_ids.append(f"kaggle_cld_{idx}")
 
     def load_from_mat(self, mat_file):
         """Load dataset from MATLAB .mat file with verified label mapping"""
