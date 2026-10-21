@@ -78,7 +78,7 @@ Add this DNS record in your domain management panel:
 ### If your Frontend is on Vercel:
 | Type | Name / Host | Target / Points To | Proxy Status (Cloudflare) | TTL |
 | :--- | :--- | :--- | :--- | :--- |
-| `CNAME` | `livercare` | `cname.vercel-dns.com` | DNS Only (Grey Cloud) | 3600 (1 Hour) |
+| `CNAME` | `livercare` | `64c4ffcd12fe2524.vercel-dns-017.com` *(or `cname.vercel-dns.com`)* | DNS Only (Grey Cloud) | 3600 (1 Hour) |
 
 *(Note: Once Vercel issues the SSL certificate, you can turn Cloudflare Proxy Orange Cloud back on with SSL mode set to **Full (Strict)**).*
 
@@ -111,13 +111,6 @@ Go to **[Render Dashboard](https://dashboard.render.com/)** ➔ Select Web Servi
 
 Add or verify the following Environment Variables:
 
-```dotenv
-PORT=10000
-PYTHON_VERSION=3.10.12
-FLASK_DEBUG=false
-SUPABASE_URL=https://vazfzosxwqlakggkmwly.supabase.co
-SUPABASE_ANON_KEY=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InZhemZ6b3N4d3FsYWtnZ2ttd2x5Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTI2MDg5MzksImV4cCI6MjEwODE4NDkzOX0.Vw7F_-kK4TtiZMQwXo5_0u8c53WBz927nYqfGKoBme0
-SUPABASE_SERVICE_ROLE_KEY=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InZhemZ6b3N4d3FsYWtnZ2ttd2x5Iiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc5MjYwODkzOSwiZXhwIjoyMTA4MTg0OTM5fQ.q8E7ZpvlXdkvwcJ-QTNDRHsDasR47pz96NvthIVG8Ko
 ```
 
 ### Render Build & Start Commands (if not using Dockerfile):
