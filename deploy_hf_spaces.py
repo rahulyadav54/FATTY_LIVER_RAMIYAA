@@ -99,13 +99,36 @@ def main():
     print_step(5, "Copying files to Space...")
     os.chdir(clone_dir)
     
+    # Configure Space metadata README for Docker SDK
+    hf_space_readme = f"""---
+title: Fatty Liver Detection System
+emoji: 🩺
+colorFrom: blue
+colorTo: indigo
+sdk: docker
+app_port: 7860
+pinned: false
+---
+
+# Fatty Liver Detection System - Professional Medical AI Dashboard
+
+AI-assisted classification of liver ultrasound scans using Siamese Neural Networks with ResNet-50 encoder.
+"""
+    with open('README.md', 'w', encoding='utf-8') as f:
+        f.write(hf_space_readme)
+    print("  ✅ Configured Hugging Face Spaces Docker SDK (README.md)")
+
     # Copy files
     files_to_copy = {
-        '../app_streamlit.py': 'app.py',
+        '../app.py': 'app.py',
         '../best_model.pth': 'best_model.pth',
         '../models': 'models',
         '../src': 'src',
-        '../requirements_streamlit.txt': 'requirements.txt',
+        '../templates': 'templates',
+        '../static': 'static',
+        '../requirements.txt': 'requirements.txt',
+        '../Dockerfile': 'Dockerfile',
+        '../.dockerignore': '.dockerignore',
     }
     
     import shutil

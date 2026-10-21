@@ -1,0 +1,12 @@
+.venv/
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.git/
+.gitignore
+.env
+data/dataset_liver_bmodes_steatosis_assessment_IJCARS.mat
+*.log
+scratch/
+browser/
