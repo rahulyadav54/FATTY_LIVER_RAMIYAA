@@ -864,6 +864,7 @@ function updateAnalyticsCharts(data) {
           }
         }
       }
+    });
   }
 }
 
