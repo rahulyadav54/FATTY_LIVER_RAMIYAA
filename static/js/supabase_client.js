@@ -79,9 +79,18 @@
       if (storedUser) {
         try {
           this.currentUser = JSON.parse(storedUser);
-          this.isDemoMode = this.currentUser.id === DEMO_USER.id;
+          if (this.currentUser && (this.currentUser.id === DEMO_USER.id || this.currentUser.id === 'demo-clinician-001')) {
+            // Purge legacy demo session to enforce legitimate authentication
+            this.currentUser = null;
+            this.isDemoMode = false;
+            localStorage.removeItem(STORAGE_KEYS.USER);
+            localStorage.removeItem(STORAGE_KEYS.SESSION);
+          } else {
+            this.isDemoMode = false;
+          }
         } catch (e) {
           this.currentUser = null;
+          this.isDemoMode = false;
         }
       }
     }
@@ -199,12 +208,7 @@
         return { user: data.user, isDemo: false };
       }
 
-      // Quick Demo fallback
-      if (cleanEmail.toLowerCase().includes('demo') || cleanEmail.toLowerCase().includes('doctor') || cleanEmail.toLowerCase().includes('admin')) {
-        return this.signInDemo();
-      }
-
-      throw new Error('Supabase credentials not configured yet.');
+      throw new Error('Supabase client is not initialized. Please configure credentials.');
     }
 
     /**
@@ -262,13 +266,10 @@
     }
 
     /**
-     * Quick Demo Sign In
+     * Quick Demo Sign In (Disabled)
      */
     signInDemo() {
-      this.currentUser = DEMO_USER;
-      this.isDemoMode = true;
-      localStorage.setItem(STORAGE_KEYS.USER, JSON.stringify(DEMO_USER));
-      return { user: DEMO_USER, isDemo: true };
+      throw new Error('Demo login has been removed. Please log in or register with your clinician credentials.');
     }
 
     /**
@@ -348,7 +349,7 @@
 
       try {
         const userId = (this.currentUser && !this.isDemoMode) ? this.currentUser.id : null;
-        const userEmail = this.currentUser ? this.currentUser.email : 'demo-clinician@hospital.org';
+        const userEmail = this.currentUser ? this.currentUser.email : 'clinician@hospital.org';
         const filename = (file && file.name) ? file.name : (predictionData.filename || 'ultrasound_scan.jpg');
         const recordId = 'FL-' + Date.now().toString(36).toUpperCase();
 

@@ -1180,7 +1180,6 @@ function initAuthentication() {
   const signUpForm = document.getElementById('signUpForm');
   const authHeading = document.getElementById('authHeading');
   const authSubheading = document.getElementById('authSubheading');
-  const btnDemoLogin = document.getElementById('btnDemoLogin');
   const btnLogout = document.getElementById('btnLogout');
   
   // Supabase modal elements
@@ -1316,17 +1315,6 @@ function initAuthentication() {
         showLoading(false);
         showToast(err.message, 'error');
       }
-    });
-  }
-
-  // Demo Login button
-  if (btnDemoLogin) {
-    btnDemoLogin.addEventListener('click', () => {
-      const res = window.SupabaseAuth.signInDemo();
-      updateTopbarProfile(res.user);
-      if (authPortal) authPortal.classList.add('hidden');
-      showToast('Signed in with Clinician Demo Access!');
-      loadCloudHistory();
     });
   }
 
