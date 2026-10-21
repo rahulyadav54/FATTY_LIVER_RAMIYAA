@@ -3,6 +3,19 @@
  * Complete interactive logic for upload, real-time prediction, history, and settings
  */
 
+// Backend API Base URL Resolver (Supports Vercel frontend -> Render backend)
+function getApiBaseUrl() {
+  if (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1') {
+    return '';
+  }
+  const savedUrl = localStorage.getItem('fl_backend_url') || window.BACKEND_API_URL;
+  if (savedUrl) {
+    return savedUrl.replace(/\/$/, '');
+  }
+  // Default to Render web service URL (replace with your exact service name if different)
+  return 'https://fatty-liver-ai-dashboard.onrender.com';
+}
+
 // Application State
 const state = {
   currentView: 'dashboard',
@@ -464,7 +477,7 @@ function runInference() {
   showLoading(true, 'Analyzing ultrasound with Siamese ResNet-50...');
   elements.analyzeBtn.disabled = true;
 
-  fetch('/predict', {
+  fetch(`${getApiBaseUrl()}/predict`, {
     method: 'POST',
     body: formData
   })
@@ -1004,7 +1017,7 @@ function exportHistoryToCsv() {
 // Status & Metadata Fetching
 // ==========================================================================
 function fetchSystemStatus() {
-  fetch('/api/status')
+  fetch(`${getApiBaseUrl()}/api/status`)
     .then(res => res.json())
     .then(data => {
       if (elements.topbarStatusText) {
@@ -1022,7 +1035,7 @@ function fetchSystemStatus() {
 }
 
 function fetchModelInfo() {
-  fetch('/api/model-info')
+  fetch(`${getApiBaseUrl()}/api/model-info`)
     .then(res => res.json())
     .then(info => {
       state.modelInfo = info;

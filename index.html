@@ -1,0 +1,914 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="light">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Fatty Liver Detection System - Professional AI Medical Dashboard</title>
+  
+  <!-- Modern Medical Typography -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  
+  <!-- Clinical Dashboard CSS -->
+  <link rel="stylesheet" href="/static/css/dashboard.css?v=20261022.4">
+
+  <!-- Resilient Styling for Analytics & Clinical Graph Card -->
+  <style>
+    .analytics-graph-card {
+      margin-top: 32px;
+      background: var(--bg-surface);
+      border: 1px solid var(--border-color);
+      border-radius: var(--radius-xl);
+      padding: 30px 32px;
+      box-shadow: 0 10px 30px -5px rgba(0, 0, 0, 0.05), 0 0 0 1px rgba(36, 120, 243, 0.04);
+      position: relative;
+      overflow: hidden;
+    }
+    .analytics-graph-card::before {
+      content: '';
+      position: absolute;
+      top: 0; left: 0; right: 0; height: 4px;
+      background: linear-gradient(90deg, #2478f3, #06b6d4, #10b981);
+    }
+    .graph-card-header {
+      display: flex; align-items: center; justify-content: space-between;
+      flex-wrap: wrap; gap: 20px; margin-bottom: 24px; padding-bottom: 20px;
+      border-bottom: 1px solid var(--border-color);
+    }
+    .analytics-title-row { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; }
+    .analytics-badge {
+      background: rgba(36, 120, 243, 0.1); color: var(--primary);
+      border: 1px solid var(--primary-border); font-size: 0.72rem;
+      font-weight: 700; padding: 3px 10px; border-radius: 9999px;
+      text-transform: uppercase; letter-spacing: 0.4px;
+    }
+    .graph-tabs {
+      display: inline-flex; align-items: center; gap: 6px;
+      background: var(--bg-surface-subtle); border: 1px solid var(--border-color);
+      padding: 6px; border-radius: var(--radius-lg);
+    }
+    .graph-tab-btn {
+      border: 1px solid transparent; background: transparent;
+      color: var(--text-muted); font-size: 0.825rem; font-weight: 600;
+      padding: 9px 16px; border-radius: var(--radius-md); cursor: pointer;
+      display: inline-flex; align-items: center; gap: 8px; white-space: nowrap;
+      transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+    .graph-tab-btn:hover { color: var(--text-heading); background: rgba(36, 120, 243, 0.06); }
+    .graph-tab-btn.active {
+      background: var(--primary); color: #ffffff;
+      box-shadow: 0 4px 14px rgba(36, 120, 243, 0.35);
+    }
+    .graph-tab-btn.active svg { stroke: #ffffff; }
+    .acoustic-metrics-grid {
+      display: grid; grid-template-columns: repeat(4, 1fr); gap: 18px; margin-bottom: 28px;
+    }
+    .metric-chip {
+      background: var(--bg-surface-subtle); border: 1px solid var(--border-color);
+      border-radius: var(--radius-lg); padding: 18px 20px; display: flex;
+      flex-direction: column; position: relative; overflow: hidden;
+      transition: all 0.25s ease;
+    }
+    .metric-chip::before {
+      content: ''; position: absolute; top: 0; left: 0; width: 100%; height: 3px;
+    }
+    .metric-chip.chip-blue::before { background: #2563eb; }
+    .metric-chip.chip-amber::before { background: #f59e0b; }
+    .metric-chip.chip-purple::before { background: #8b5cf6; }
+    .metric-chip.chip-emerald::before { background: #10b981; }
+    .metric-chip:hover {
+      transform: translateY(-3px); box-shadow: 0 8px 20px rgba(0, 0, 0, 0.06);
+      border-color: var(--primary-border);
+    }
+    .metric-chip-header { display: flex; align-items: center; gap: 8px; margin-bottom: 10px; }
+    .metric-chip-icon {
+      width: 24px; height: 24px; border-radius: 6px;
+      display: flex; align-items: center; justify-content: center;
+    }
+    .chip-blue .metric-chip-icon { background: #dbeafe; color: #1d4ed8; }
+    .chip-amber .metric-chip-icon { background: #fef3c7; color: #b45309; }
+    .chip-purple .metric-chip-icon { background: #ede9fe; color: #6d28d9; }
+    .chip-emerald .metric-chip-icon { background: #d1fae5; color: #047857; }
+    .metric-chip-label {
+      font-size: 0.72rem; color: var(--text-muted); font-weight: 700;
+      text-transform: uppercase; letter-spacing: 0.5px;
+    }
+    .metric-chip-value {
+      font-size: 1.45rem; font-weight: 800; color: var(--text-heading);
+      line-height: 1.2; font-variant-numeric: tabular-nums;
+    }
+    .metric-chip-footer { display: flex; align-items: center; gap: 6px; margin-top: auto; }
+    .status-dot { width: 7px; height: 7px; border-radius: 50%; flex-shrink: 0; }
+    .status-dot.green { background: #10b981; box-shadow: 0 0 6px #10b981; }
+    .status-dot.amber { background: #f59e0b; box-shadow: 0 0 6px #f59e0b; }
+    .status-dot.purple { background: #8b5cf6; box-shadow: 0 0 6px #8b5cf6; }
+    .status-dot.blue { background: #2563eb; box-shadow: 0 0 6px #2563eb; }
+    .metric-chip-sub { font-size: 0.75rem; color: var(--text-muted); }
+    .graph-viewport-wrap {
+      position: relative; min-height: 380px; background: var(--bg-surface-subtle);
+      border: 1px solid var(--border-color); border-radius: var(--radius-lg);
+      padding: 24px; display: flex; align-items: center; justify-content: center;
+    }
+    .chart-container { display: none; width: 100%; height: 360px; position: relative; }
+    .chart-container.active { display: block; }
+    @media (max-width: 1024px) {
+      .acoustic-metrics-grid { grid-template-columns: repeat(2, 1fr); }
+    }
+    @media (max-width: 600px) {
+      .acoustic-metrics-grid { grid-template-columns: 1fr; }
+      .graph-tabs { width: 100%; flex-direction: column; }
+      .graph-tab-btn { width: 100%; justify-content: center; }
+    }
+  </style>
+</head>
+<body>
+  <div class="app-container">
+    
+    <!-- ======================================================================
+         A. Left Sidebar Navigation (Reference 1)
+         ====================================================================== -->
+    <aside class="sidebar" id="sidebar">
+      <div class="sidebar-header">
+        <div class="brand-logo-wrap">
+          <img src="/static/images/liver_logo.jpg" alt="Liver Logo">
+        </div>
+        <div class="brand-text">
+          <h1>Fatty Liver <span>Detection System</span></h1>
+          <span class="brand-badge">AI Ultrasound Analysis</span>
+        </div>
+      </div>
+
+      <nav class="sidebar-nav">
+        <button class="nav-item active" data-view="dashboard">
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+            <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path>
+            <polyline points="9 22 9 12 15 12 15 22"></polyline>
+          </svg>
+          <span>Dashboard</span>
+        </button>
+
+        <button class="nav-item" data-view="predict">
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+            <polyline points="16 16 12 12 8 16"></polyline>
+            <line x1="12" y1="12" x2="12" y2="21"></line>
+            <path d="M20.39 18.39A5 5 0 0 0 18 9h-1.26A8 8 0 1 0 3 16.3"></path>
+            <polyline points="16 16 12 12 8 16"></polyline>
+          </svg>
+          <span>Upload & Predict</span>
+        </button>
+
+        <button class="nav-item" data-view="history">
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+            <circle cx="12" cy="12" r="10"></circle>
+            <polyline points="12 6 12 12 16 14"></polyline>
+          </svg>
+          <span>Prediction History</span>
+        </button>
+
+        <button class="nav-item" data-view="model">
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+            <line x1="18" y1="20" x2="18" y2="10"></line>
+            <line x1="12" y1="20" x2="12" y2="4"></line>
+            <line x1="6" y1="20" x2="6" y2="14"></line>
+          </svg>
+          <span>Model Information</span>
+        </button>
+
+        <button class="nav-item" data-view="about">
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+            <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+            <polyline points="14 2 14 8 20 8"></polyline>
+            <line x1="16" y1="13" x2="8" y2="13"></line>
+            <line x1="16" y1="17" x2="8" y2="17"></line>
+            <polyline points="10 9 9 9 8 9"></polyline>
+          </svg>
+          <span>About</span>
+        </button>
+
+        <button class="nav-item" data-view="settings">
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+            <circle cx="12" cy="12" r="3"></circle>
+            <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path>
+          </svg>
+          <span>Settings</span>
+        </button>
+      </nav>
+
+      <div class="sidebar-footer">
+        <div class="system-status-card">
+          <div class="pulse-dot"></div>
+          <div class="status-info">
+            <strong>Model Online</strong>
+            <span id="deviceBadgeText">ResNet-50 Siamese Engine</span>
+          </div>
+        </div>
+      </div>
+    </aside>
+
+    <!-- ======================================================================
+         Main Layout Wrapper
+         ====================================================================== -->
+    <div class="main-wrapper">
+      
+      <!-- Top Navigation Bar -->
+      <header class="topbar">
+        <div class="topbar-left">
+          <button class="mobile-menu-btn" id="mobileMenuBtn" aria-label="Toggle Navigation">
+            <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <line x1="3" y1="12" x2="21" y2="12"></line>
+              <line x1="3" y1="6" x2="21" y2="6"></line>
+              <line x1="3" y1="18" x2="21" y2="18"></line>
+            </svg>
+          </button>
+          <div class="breadcrumbs">
+            <span>Dashboard / </span>
+            <strong id="breadcrumb-page">Clinical Dashboard</strong>
+          </div>
+        </div>
+
+        <div class="topbar-right">
+          <div class="model-badge-top">
+            <span class="pulse-dot"></span>
+            <span id="topbarStatusText">Siamese ResNet-50 • Active</span>
+          </div>
+
+          <button class="icon-btn" id="themeToggleBtn" title="Toggle Light/Dark Theme">
+            <span id="themeIcon">
+              <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path>
+              </svg>
+            </span>
+          </button>
+
+          <button class="icon-btn" id="helpBtn" title="Help & Documentation">
+            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <circle cx="12" cy="12" r="10"></circle>
+              <path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"></path>
+              <line x1="12" y1="17" x2="12.01" y2="17"></line>
+            </svg>
+          </button>
+        </div>
+      </header>
+
+      <!-- Main Content Area -->
+      <main class="content-area">
+
+        <!-- ==================================================================
+             VIEW 1: Dashboard View (Main UI matching Reference 1)
+             ================================================================== -->
+        <section class="view-section active" id="dashboard-view">
+          
+          <!-- C. Medical Hero Banner -->
+          <div class="medical-hero">
+            <div class="hero-content">
+              <div class="hero-pill">
+                <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"></polyline></svg>
+                AI-Assisted Ultrasound Analysis
+              </div>
+              <h1 class="hero-title">Fatty Liver Detection System</h1>
+              <p class="hero-subtitle">
+                AI-powered classification of liver ultrasound images using Siamese Neural Networks (ResNet-50)
+              </p>
+              <div class="hero-tags">
+                <span class="hero-tag">B-Mode Ultrasound</span>
+                <span class="hero-tag">5 Steatosis Grades</span>
+                <span class="hero-tag">ResNet-50 Backbone</span>
+                <span class="hero-tag">Real-Time Inference</span>
+              </div>
+            </div>
+            
+            <div class="hero-illustration">
+              <img src="/static/images/liver_hero.jpg" alt="Liver Anatomy Medical Illustration">
+            </div>
+          </div>
+
+          <!-- 4 Feature Summary Cards -->
+          <div class="feature-grid">
+            <div class="feature-card purple">
+              <div class="feature-icon-badge">
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect>
+                  <circle cx="8.5" cy="8.5" r="1.5"></circle>
+                  <polyline points="21 15 16 10 5 21"></polyline>
+                </svg>
+              </div>
+              <h2 class="feature-title">Image Classification</h2>
+              <p class="feature-desc">Classify liver ultrasound images into 5 categories</p>
+            </div>
+
+            <div class="feature-card green">
+              <div class="feature-icon-badge">
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <path d="M12 2a10 10 0 1 0 10 10A10 10 0 0 0 12 2zm1 14.93V17a1 1 0 0 1-2 0v-.07A7 7 0 0 1 5.07 11H5a1 1 0 0 1 0-2h.07A7 7 0 0 1 11 3.07V3a1 1 0 0 1 2 0v.07A7 7 0 0 1 18.93 9H19a1 1 0 0 1 0 2h-.07A7 7 0 0 1 13 16.93z"></path>
+                </svg>
+              </div>
+              <h2 class="feature-title">Deep Learning Model</h2>
+              <p class="feature-desc">Siamese Neural Network with ResNet-50 encoder</p>
+            </div>
+
+            <div class="feature-card blue">
+              <div class="feature-icon-badge">
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <line x1="18" y1="20" x2="18" y2="10"></line>
+                  <line x1="12" y1="20" x2="12" y2="4"></line>
+                  <line x1="6" y1="20" x2="6" y2="14"></line>
+                </svg>
+              </div>
+              <h2 class="feature-title">5-Class Prediction</h2>
+              <p class="feature-desc">Normal, Grade I, Grade II, Grade III, CLD</p>
+            </div>
+
+            <div class="feature-card amber">
+              <div class="feature-icon-badge">
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"></polygon>
+                </svg>
+              </div>
+              <h2 class="feature-title">Fast & Easy to Use</h2>
+              <p class="feature-desc">Upload an image and get instant prediction results</p>
+            </div>
+          </div>
+
+          <!-- Two-Column Analysis Workspace -->
+          <div class="analysis-workspace">
+            
+            <!-- 5. Upload Ultrasound Image Card -->
+            <div class="dashboard-card upload-column-card">
+              <div class="card-header">
+                <div class="card-title-group">
+                  <span class="card-title-icon">
+                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                      <polyline points="16 16 12 12 8 16"></polyline>
+                      <line x1="12" y1="12" x2="12" y2="21"></line>
+                      <path d="M20.39 18.39A5 5 0 0 0 18 9h-1.26A8 8 0 1 0 3 16.3"></path>
+                    </svg>
+                  </span>
+                  <h3 class="card-title">Upload Ultrasound Image</h3>
+                </div>
+
+                <!-- Mode Selector -->
+                <div class="mode-toggle-group">
+                  <button class="mode-tab-btn active" data-mode="multiclass">5-Class Multi</button>
+                  <button class="mode-tab-btn" data-mode="binary">Binary</button>
+                </div>
+              </div>
+
+              <!-- Drag and drop zone -->
+              <div class="dropzone" id="uploadDropzone">
+                <div class="dropzone-icon">
+                  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                    <rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect>
+                    <circle cx="8.5" cy="8.5" r="1.5"></circle>
+                    <polyline points="21 15 16 10 5 21"></polyline>
+                  </svg>
+                </div>
+                <div class="dropzone-title">Drag and drop an ultrasound image here</div>
+                <div class="dropzone-divider">or</div>
+                <button type="button" class="btn-browse" id="browseBtn">
+                  <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+                    <polyline points="17 8 12 3 7 8"></polyline>
+                    <line x1="12" y1="3" x2="12" y2="15"></line>
+                  </svg>
+                  Browse Files
+                </button>
+                <div class="dropzone-hint">Supported formats: JPG, JPEG, PNG (Max 16MB)</div>
+                <input type="file" id="fileInput" accept="image/jpeg,image/png,image/bmp" style="display: none;">
+              </div>
+
+              <!-- Preview State Panel (Shown when image loaded) -->
+              <div class="preview-panel" id="previewPanel">
+                <div class="preview-img-container">
+                  <img id="previewImg" src="" alt="Ultrasound Preview">
+                </div>
+                
+                <div class="file-meta-bar">
+                  <div class="file-info">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                      <path d="M13 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V9z"></path>
+                      <polyline points="13 2 13 9 20 9"></polyline>
+                    </svg>
+                    <span id="fileName">image.jpg</span>
+                  </div>
+                  <div class="file-dims">
+                    <span id="fileDims">-- × --</span> &bull; <span id="fileSize">-- KB</span>
+                  </div>
+                </div>
+
+                <div class="btn-actions-row">
+                  <button type="button" class="btn-primary" id="analyzeBtn">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                      <polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"></polygon>
+                    </svg>
+                    Analyze Image
+                  </button>
+                  <button type="button" class="btn-secondary" id="clearBtn">
+                    Clear / Reset
+                  </button>
+                </div>
+              </div>
+            </div>
+
+            <!-- 6. Sample Ultrasound Image Card -->
+            <div class="dashboard-card sample-column-card">
+              <div class="card-header">
+                <div class="card-title-group">
+                  <span class="card-title-icon">
+                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                      <line x1="18" y1="20" x2="18" y2="10"></line>
+                      <line x1="12" y1="20" x2="12" y2="4"></line>
+                      <line x1="6" y1="20" x2="6" y2="14"></line>
+                    </svg>
+                  </span>
+                  <h3 class="card-title">Sample Ultrasound Image</h3>
+                </div>
+              </div>
+
+              <div class="sample-card-body">
+                <!-- Sample selection pills -->
+                <div class="sample-selector-pills">
+                  <button class="sample-pill active" data-sample="normal">Normal</button>
+                  <button class="sample-pill" data-sample="grade1">Grade I</button>
+                  <button class="sample-pill" data-sample="grade2">Grade II</button>
+                  <button class="sample-pill" data-sample="grade3">Grade III</button>
+                  <button class="sample-pill" data-sample="cld">CLD</button>
+                </div>
+
+                <!-- Sample Image Preview Frame -->
+                <div class="sample-image-frame">
+                  <img id="sampleImg" src="/static/images/samples/sample_normal.jpg" alt="Sample Ultrasound Scan">
+                  <div class="sample-badge-overlay" id="sampleBadge">Normal Control Scan</div>
+                </div>
+
+                <div class="sample-description" id="sampleDesc">
+                  Homogeneous parenchyma, normal liver-to-kidney contrast, preserved portal vein wall echogenicity, and sharp diaphragm contour.
+                </div>
+
+                <button type="button" class="btn-primary" id="useSampleBtn">
+                  <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <polyline points="9 11 12 14 22 4"></polyline>
+                    <path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"></path>
+                  </svg>
+                  Use Sample Image
+                </button>
+              </div>
+            </div>
+
+          </div>
+
+          <!-- 7. Predicted Class Probabilities Section (Reference 1) -->
+          <div class="results-section">
+            <div class="results-header">
+              <div class="card-title-group">
+                <span class="card-title-icon">
+                  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <line x1="8" y1="6" x2="21" y2="6"></line>
+                    <line x1="8" y1="12" x2="21" y2="12"></line>
+                    <line x1="8" y1="18" x2="21" y2="18"></line>
+                    <line x1="3" y1="6" x2="3.01" y2="6"></line>
+                    <line x1="3" y1="12" x2="3.01" y2="12"></line>
+                    <line x1="3" y1="18" x2="3.01" y2="18"></line>
+                  </svg>
+                </span>
+                <h3 class="card-title">Predicted Class Probabilities</h3>
+              </div>
+            </div>
+
+            <!-- Active Prediction Diagnosis Summary (Appears upon analysis) -->
+            <div class="prediction-summary-banner" id="predictionSummaryBanner">
+              <div class="summary-top-row">
+                <div class="diagnosis-badge-wrap">
+                  <span class="diagnosis-class-badge" id="diagnosisClass">Normal</span>
+                  <span class="severity-pill normal" id="severityPill">NORMAL</span>
+                </div>
+                <div class="summary-meta">
+                  <span>Confidence: <strong id="confidenceVal">--%</strong></span>
+                  <span>Inference Latency: <strong id="processingTime">--s</strong></span>
+                </div>
+              </div>
+              <p class="diagnosis-desc" id="diagnosisDesc">
+                Healthy liver with no steatosis. Liver echogenicity is normal.
+              </p>
+              <div class="summary-actions-row">
+                <button type="button" class="btn-small btn-primary" id="printReportBtn">
+                  <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 6 2 18 2 18 9"></polyline><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"></path><rect x="6" y="14" width="12" height="8"></rect></svg>
+                  Print / Export Report
+                </button>
+                <button type="button" class="btn-small btn-secondary" id="copyJsonBtn">
+                  <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg>
+                  Copy JSON
+                </button>
+              </div>
+            </div>
+
+            <!-- The 5 Class Cards (Exact Reference 1 Layout) -->
+            <div class="prob-cards-grid">
+              
+              <!-- Normal -->
+              <div class="prob-card card-normal" id="card-Normal">
+                <div class="winner-badge">PREDICTED</div>
+                <div class="prob-card-title">Normal</div>
+                <div class="prob-card-sub">&lt; 5% Steatosis</div>
+                <div class="prob-card-pct">0.0%</div>
+                <div class="prob-bar-track">
+                  <div class="prob-bar-fill" style="width: 0%;"></div>
+                </div>
+              </div>
+
+              <!-- Grade I -->
+              <div class="prob-card card-grade1" id="card-Grade-I">
+                <div class="winner-badge">PREDICTED</div>
+                <div class="prob-card-title">Grade I</div>
+                <div class="prob-card-sub">5% - 35% Steatosis</div>
+                <div class="prob-card-pct">0.0%</div>
+                <div class="prob-bar-track">
+                  <div class="prob-bar-fill" style="width: 0%;"></div>
+                </div>
+              </div>
+
+              <!-- Grade II -->
+              <div class="prob-card card-grade2" id="card-Grade-II">
+                <div class="winner-badge">PREDICTED</div>
+                <div class="prob-card-title">Grade II</div>
+                <div class="prob-card-sub">35% - 65% Steatosis</div>
+                <div class="prob-card-pct">0.0%</div>
+                <div class="prob-bar-track">
+                  <div class="prob-bar-fill" style="width: 0%;"></div>
+                </div>
+              </div>
+
+              <!-- Grade III -->
+              <div class="prob-card card-grade3" id="card-Grade-III">
+                <div class="winner-badge">PREDICTED</div>
+                <div class="prob-card-title">Grade III</div>
+                <div class="prob-card-sub">&gt; 65% Steatosis</div>
+                <div class="prob-card-pct">0.0%</div>
+                <div class="prob-bar-track">
+                  <div class="prob-bar-fill" style="width: 0%;"></div>
+                </div>
+              </div>
+
+              <!-- CLD -->
+              <div class="prob-card card-cld" id="card-CLD">
+                <div class="winner-badge">PREDICTED</div>
+                <div class="prob-card-title">CLD</div>
+                <div class="prob-card-sub">Chronic Liver Disease</div>
+                <div class="prob-card-pct">0.0%</div>
+                <div class="prob-bar-track">
+                  <div class="prob-bar-fill" style="width: 0%;"></div>
+                </div>
+              </div>
+
+            </div>
+
+            <!-- Clinical Ultrasound Analytics & Detailed Graphs -->
+            <div class="analytics-graph-card" id="analyticsGraphCard">
+              <div class="graph-card-header">
+                <div class="card-title-group">
+                  <span class="card-title-icon">
+                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                      <polyline points="22 12 18 12 15 21 9 3 6 12 2 12"></polyline>
+                    </svg>
+                  </span>
+                  <div>
+                    <div class="analytics-title-row">
+                      <h3 class="card-title">Ultrasound Analytics & Clinical Detail Graphs</h3>
+                      <span class="analytics-badge">Biomarker Engine Active</span>
+                    </div>
+                    <p class="analytics-subtitle">
+                      Quantitative acoustic sound decay, multi-class probability metrics, parenchymal echogenicity, and steatosis radar
+                    </p>
+                  </div>
+                </div>
+
+                <!-- Segmented Tab Controls with Icons -->
+                <div class="graph-tabs">
+                  <button type="button" class="graph-tab-btn active" data-graph="probabilities">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                      <line x1="18" y1="20" x2="18" y2="10"></line>
+                      <line x1="12" y1="20" x2="12" y2="4"></line>
+                      <line x1="6" y1="20" x2="6" y2="14"></line>
+                    </svg>
+                    <span>Probability Distribution</span>
+                  </button>
+                  <button type="button" class="graph-tab-btn" data-graph="attenuation">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                      <polyline points="22 12 18 12 15 21 9 3 6 12 2 12"></polyline>
+                    </svg>
+                    <span>Acoustic Depth Profile</span>
+                  </button>
+                  <button type="button" class="graph-tab-btn" data-graph="histogram">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                      <rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect>
+                      <line x1="3" y1="9" x2="21" y2="9"></line>
+                      <line x1="9" y1="21" x2="9" y2="9"></line>
+                    </svg>
+                    <span>Echogenicity Histogram</span>
+                  </button>
+                  <button type="button" class="graph-tab-btn" data-graph="radar">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                      <polygon points="12 2 22 8.5 22 15.5 12 22 2 15.5 2 8.5 12 2"></polygon>
+                    </svg>
+                    <span>Steatosis Radar</span>
+                  </button>
+                </div>
+              </div>
+
+              <!-- Quick Acoustic Metrics Row -->
+              <div class="acoustic-metrics-grid">
+                <div class="metric-chip chip-blue">
+                  <div class="metric-chip-header">
+                    <span class="metric-chip-icon">
+                      <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="5"></circle><line x1="12" y1="1" x2="12" y2="3"></line><line x1="12" y1="21" x2="12" y2="23"></line><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"></line><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"></line><line x1="1" y1="12" x2="3" y2="12"></line><line x1="21" y1="12" x2="23" y2="12"></line><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"></line><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"></line></svg>
+                    </span>
+                    <span class="metric-chip-label">Mean Echogenicity</span>
+                  </div>
+                  <div class="metric-chip-value-row">
+                    <span class="metric-chip-value" id="valMeanEcho">88.5 / 255</span>
+                  </div>
+                  <div class="metric-chip-footer">
+                    <span class="status-dot green"></span>
+                    <span class="metric-chip-sub">Grayscale parenchymal brightness</span>
+                  </div>
+                </div>
+
+                <div class="metric-chip chip-amber">
+                  <div class="metric-chip-header">
+                    <span class="metric-chip-icon">
+                      <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="23 18 13.5 8.5 8.5 13.5 1 6"></polyline><polyline points="17 18 23 18 23 12"></polyline></svg>
+                    </span>
+                    <span class="metric-chip-label">Attenuation Gradient</span>
+                  </div>
+                  <div class="metric-chip-value-row">
+                    <span class="metric-chip-value" id="valAttenuationSlope">-0.31 dB/cm</span>
+                  </div>
+                  <div class="metric-chip-footer">
+                    <span class="status-dot amber"></span>
+                    <span class="metric-chip-sub">Sound beam decay gradient</span>
+                  </div>
+                </div>
+
+                <div class="metric-chip chip-purple">
+                  <div class="metric-chip-header">
+                    <span class="metric-chip-icon">
+                      <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"></path></svg>
+                    </span>
+                    <span class="metric-chip-label">Speckle Noise σ²</span>
+                  </div>
+                  <div class="metric-chip-value-row">
+                    <span class="metric-chip-value" id="valSpeckle">±26.4</span>
+                  </div>
+                  <div class="metric-chip-footer">
+                    <span class="status-dot purple"></span>
+                    <span class="metric-chip-sub">Parenchymal texture variance</span>
+                  </div>
+                </div>
+
+                <div class="metric-chip chip-emerald">
+                  <div class="metric-chip-header">
+                    <span class="metric-chip-icon">
+                      <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path></svg>
+                    </span>
+                    <span class="metric-chip-label">Diagnostic Status</span>
+                  </div>
+                  <div class="metric-chip-value-row">
+                    <span class="metric-chip-value" id="valDiagnosticStatus">Normal Control</span>
+                  </div>
+                  <div class="metric-chip-footer">
+                    <span class="status-dot green"></span>
+                    <span class="metric-chip-sub">Siamese ResNet-50 (91.1%)</span>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Chart Viewports Container -->
+              <div class="graph-viewport-wrap">
+                <div class="chart-container active" id="chart-probabilities-wrap">
+                  <canvas id="chartProbabilities"></canvas>
+                </div>
+                <div class="chart-container" id="chart-attenuation-wrap">
+                  <canvas id="chartAttenuation"></canvas>
+                </div>
+                <div class="chart-container" id="chart-histogram-wrap">
+                  <canvas id="chartHistogram"></canvas>
+                </div>
+                <div class="chart-container" id="chart-radar-wrap">
+                  <canvas id="chartRadar"></canvas>
+                </div>
+              </div>
+            </div>
+
+            <!-- Clinical Disclaimer -->
+            <div class="disclaimer-card">
+              <div class="disclaimer-icon">
+                <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"></path>
+                  <line x1="12" y1="9" x2="12" y2="13"></line>
+                  <line x1="12" y1="17" x2="12.01" y2="17"></line>
+                </svg>
+              </div>
+              <div class="disclaimer-text">
+                <strong>Medical Research Disclaimer:</strong> This application is intended for research and educational purposes. Its predictions are AI-generated estimates and are not a substitute for professional medical assessment, radiologist review, or official clinical diagnosis. Always consult a qualified medical professional regarding liver health concerns.
+              </div>
+            </div>
+
+          </div>
+
+        </section>
+
+        <!-- ==================================================================
+             VIEW 2: Prediction History
+             ================================================================== -->
+        <section class="view-section" id="history-view">
+          <div class="dashboard-card">
+            <div class="card-header">
+              <div class="card-title-group">
+                <span class="card-title-icon">
+                  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <circle cx="12" cy="12" r="10"></circle>
+                    <polyline points="12 6 12 12 16 14"></polyline>
+                  </svg>
+                </span>
+                <h3 class="card-title">Prediction History</h3>
+              </div>
+              <div class="card-actions">
+                <button type="button" class="btn-small btn-primary" id="exportCsvBtn">Export CSV</button>
+                <button type="button" class="btn-small btn-secondary" id="clearHistoryBtn">Clear All</button>
+              </div>
+            </div>
+
+            <div class="history-controls">
+              <div class="search-input-wrap">
+                <svg class="search-icon-pos" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <circle cx="11" cy="11" r="8"></circle>
+                  <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+                </svg>
+                <input type="text" id="historySearch" placeholder="Search by ID, filename, or diagnosis...">
+              </div>
+
+              <select class="filter-select" id="historyFilter">
+                <option value="all">All Classes</option>
+                <option value="Normal">Normal</option>
+                <option value="Grade-I">Grade I</option>
+                <option value="Grade-II">Grade II</option>
+                <option value="Grade-III">Grade III</option>
+                <option value="CLD">CLD</option>
+              </select>
+            </div>
+
+            <div class="history-table-container">
+              <table class="history-table">
+                <thead>
+                  <tr>
+                    <th>Record ID</th>
+                    <th>Date & Time</th>
+                    <th>Filename</th>
+                    <th>Mode</th>
+                    <th>Prediction</th>
+                    <th>Confidence</th>
+                    <th>Severity</th>
+                    <th>Action</th>
+                  </tr>
+                </thead>
+                <tbody id="historyTableBody">
+                  <!-- Dynamically populated via JavaScript -->
+                </tbody>
+              </table>
+              <div class="empty-history-state" id="emptyHistoryState">
+                No prediction history recorded yet. Run an analysis from the dashboard.
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <!-- ==================================================================
+             VIEW 3: Model Information
+             ================================================================== -->
+        <section class="view-section" id="model-view">
+          <div class="spec-grid">
+            <div class="spec-card">
+              <h3 class="card-title">Siamese Neural Network Architecture</h3>
+              <p style="font-size: 0.85rem; color: var(--text-muted); margin-top: 6px;">
+                Twin ResNet-50 feature extractor with contrastive self-supervised pre-training and downstream 5-class linear classifier.
+              </p>
+              <div class="spec-list" id="modelSpecsDynamic">
+                <!-- Dynamically loaded from /api/model-info -->
+              </div>
+            </div>
+
+            <div class="spec-card">
+              <h3 class="card-title">Supported Steatosis Categories</h3>
+              <div class="spec-list" style="margin-top: 14px;">
+                <div class="spec-row">
+                  <span class="spec-label"><strong style="color: var(--color-normal);">Normal</strong></span>
+                  <span class="spec-value">&lt; 5% fat, normal parenchymal echogenicity</span>
+                </div>
+                <div class="spec-row">
+                  <span class="spec-label"><strong style="color: var(--color-grade1);">Grade I</strong></span>
+                  <span class="spec-value">5% - 35% fat, mild diffuse hyperechogenicity</span>
+                </div>
+                <div class="spec-row">
+                  <span class="spec-label"><strong style="color: var(--color-grade2);">Grade II</strong></span>
+                  <span class="spec-value">35% - 65% fat, impaired portal vessel definition</span>
+                </div>
+                <div class="spec-row">
+                  <span class="spec-label"><strong style="color: var(--color-grade3);">Grade III</strong></span>
+                  <span class="spec-value">&gt; 65% fat, marked acoustic attenuation</span>
+                </div>
+                <div class="spec-row">
+                  <span class="spec-label"><strong style="color: var(--color-cld);">CLD</strong></span>
+                  <span class="spec-value">Chronic Liver Disease, fibrotic parenchymal changes</span>
+                </div>
+              </div>
+
+              <div style="margin-top: 20px; font-size: 0.85rem; color: var(--text-muted); line-height: 1.5;">
+                <strong>Dataset:</strong> Evaluated on the IJCARS clinical B-mode liver ultrasound benchmark (55 patients, 550 raw scans) with self-supervised contrastive learning and spatial augmentations.
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <!-- ==================================================================
+             VIEW 4: About Section
+             ================================================================== -->
+        <section class="view-section" id="about-view">
+          <div class="about-grid">
+            <div class="about-card">
+              <h3>About the Fatty Liver Detection System</h3>
+              <p>
+                Non-Alcoholic Fatty Liver Disease (NAFLD) affects up to 25% of the global adult population and is strongly associated with metabolic syndrome, type 2 diabetes, and cardiovascular conditions. Early and accurate detection of hepatic steatosis is essential to halt or reverse progression toward non-alcoholic steatohepatitis (NASH), cirrhosis, or hepatocellular carcinoma.
+              </p>
+              <p>
+                While liver biopsy is the historic reference standard, it is invasive, costly, and associated with patient discomfort and complications. Ultrasound B-mode imaging is widely accessible and non-invasive, but visual qualitative evaluation suffers from inter-observer and intra-observer variability.
+              </p>
+              <p>
+                This clinical AI system implements a <strong>Siamese Neural Network with a ResNet-50 backbone</strong> trained via self-supervised contrastive learning. By extracting high-dimensional latent representations of liver parenchyma and ultrasound attenuation patterns, the model provides objective, reproducible assessments across all five clinical steatosis categories.
+              </p>
+            </div>
+
+            <div class="about-card">
+              <h3>Clinical Usage Protocol</h3>
+              <ol style="margin-left: 20px; color: var(--text-muted); font-size: 0.875rem; line-height: 1.6;">
+                <li>Ensure the ultrasound image captures liver parenchyma adjacent to the right kidney or diaphragm.</li>
+                <li>Verify the scan is in standard B-mode format (JPG, PNG, or BMP).</li>
+                <li>Upload the scan or select one of the clinical reference samples.</li>
+                <li>Review the multi-class probability distribution and confidence score.</li>
+                <li>Export or print the report for medical records and radiologist corroboration.</li>
+              </ol>
+            </div>
+          </div>
+        </section>
+
+        <!-- ==================================================================
+             VIEW 5: Settings Section
+             ================================================================== -->
+        <section class="view-section" id="settings-view">
+          <div class="dashboard-card" style="max-width: 600px;">
+            <h3 class="card-title" style="margin-bottom: 20px;">System Preferences</h3>
+            <div class="spec-list">
+              <div class="spec-row" style="align-items: center;">
+                <span class="spec-label">Color Theme</span>
+                <span class="spec-value">Light &bull; Dark mode available via topbar</span>
+              </div>
+              <div class="spec-row" style="align-items: center;">
+                <span class="spec-label">Default Analysis Mode</span>
+                <span class="spec-value">5-Class Multi-class (Grade 0 - CLD)</span>
+              </div>
+              <div class="spec-row" style="align-items: center;">
+                <span class="spec-label">Uncertainty Threshold</span>
+                <span class="spec-value">40% Multi-class / 60% Binary</span>
+              </div>
+              <div class="spec-row" style="align-items: center;">
+                <span class="spec-label">Model Weights File</span>
+                <span class="spec-value">best_model.pth (98.8 MB)</span>
+              </div>
+              <div class="spec-row" style="align-items: center;">
+                <span class="spec-label">System Version</span>
+                <span class="spec-value">v2.4.0 Clinical Release</span>
+              </div>
+            </div>
+          </div>
+        </section>
+
+      </main>
+    </div>
+  </div>
+
+  <!-- Loading Overlay -->
+  <div class="loading-overlay" id="loadingOverlay">
+    <div class="loading-box">
+      <div class="spinner"></div>
+      <h3 style="font-size: 1.1rem; color: var(--text-heading);" id="loadingText">Processing...</h3>
+      <p style="font-size: 0.8rem; color: var(--text-muted);">Please wait while the neural network processes the ultrasound features.</p>
+    </div>
+  </div>
+
+  <!-- Toast Notification -->
+  <div class="toast" id="toast"></div>
+
+  <!-- Charting Engine & Client JavaScript -->
+  <script src="/static/js/chart.min.js"></script>
+  <script src="/static/js/dashboard.js?v=20261022.4"></script>
+</body>
+</html>
