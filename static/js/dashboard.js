@@ -109,6 +109,7 @@ document.addEventListener('DOMContentLoaded', () => {
   fetchModelInfo();
   renderHistory();
   initBaselineAnalyticsCharts();
+  initAuthentication();
 });
 
 // ==========================================================================
@@ -494,6 +495,9 @@ function runInference() {
       state.lastResult = result;
       displayPredictionResults(result);
       saveToHistory(result, state.selectedFile);
+      if (window.SupabaseAuth) {
+        window.SupabaseAuth.syncPrediction(result);
+      }
       showToast(`Inference complete: ${result.prediction}`);
     })
     .catch(err => {
@@ -1101,3 +1105,234 @@ function showToast(message, type = 'info') {
     elements.toast.classList.remove('show');
   }, 3500);
 }
+
+// ==========================================================================
+// Authentication & Supabase Portal Management
+// ==========================================================================
+function initAuthentication() {
+  const authPortal = document.getElementById('authPortal');
+  const tabSignIn = document.getElementById('tabSignIn');
+  const tabSignUp = document.getElementById('tabSignUp');
+  const signInForm = document.getElementById('signInForm');
+  const signUpForm = document.getElementById('signUpForm');
+  const authHeading = document.getElementById('authHeading');
+  const authSubheading = document.getElementById('authSubheading');
+  const btnDemoLogin = document.getElementById('btnDemoLogin');
+  const btnLogout = document.getElementById('btnLogout');
+  
+  // Supabase modal elements
+  const supabaseModal = document.getElementById('supabaseModal');
+  const btnOpenSupabaseModal = document.getElementById('btnOpenSupabaseModal');
+  const btnCloseSupabaseModal = document.getElementById('btnCloseSupabaseModal');
+  const supabaseConfigForm = document.getElementById('supabaseConfigForm');
+  const btnTestSupabaseConn = document.getElementById('btnTestSupabaseConn');
+  const cfgSupabaseUrl = document.getElementById('cfgSupabaseUrl');
+  const cfgSupabaseKey = document.getElementById('cfgSupabaseKey');
+  const supabaseTestResult = document.getElementById('supabaseTestResult');
+  const supabaseStatusIndicator = document.getElementById('supabaseStatusIndicator');
+  const supabaseStatusLabel = document.getElementById('supabaseStatusLabel');
+
+  // Update Supabase status indicator in portal
+  function updateSupabaseStatusDisplay() {
+    if (!supabaseStatusIndicator || !supabaseStatusLabel) return;
+    const isConfigured = window.SupabaseAuth && window.SupabaseAuth.isConfigured();
+    if (isConfigured) {
+      supabaseStatusIndicator.classList.add('connected');
+      supabaseStatusLabel.textContent = 'Supabase: Connected';
+    } else {
+      supabaseStatusIndicator.classList.remove('connected');
+      supabaseStatusLabel.textContent = 'Supabase: Not Configured';
+    }
+  }
+
+  // Update user profile badge in topbar
+  function updateTopbarProfile(user) {
+    const avatar = document.getElementById('userAvatar');
+    const nameEl = document.getElementById('userDisplayName');
+    const roleEl = document.getElementById('userDisplayRole');
+    if (!user) return;
+
+    const name = (user.user_metadata && user.user_metadata.full_name) || (user.email ? user.email.split('@')[0] : 'Clinician');
+    const role = (user.user_metadata && user.user_metadata.role) || 'Radiologist';
+
+    if (nameEl) nameEl.textContent = name;
+    if (roleEl) roleEl.textContent = role;
+    if (avatar) {
+      const initials = name.replace(/^Dr\.\s*/i, '').trim().split(' ').map(p => p[0]).join('').substring(0, 2).toUpperCase() || 'DR';
+      avatar.textContent = initials;
+    }
+  }
+
+  // Check initial authentication
+  if (window.SupabaseAuth && window.SupabaseAuth.isAuthenticated()) {
+    if (authPortal) authPortal.classList.add('hidden');
+    updateTopbarProfile(window.SupabaseAuth.getUser());
+  } else {
+    if (authPortal) authPortal.classList.remove('hidden');
+  }
+
+  updateSupabaseStatusDisplay();
+
+  // Tab switching (Sign In vs Register)
+  if (tabSignIn && tabSignUp) {
+    tabSignIn.addEventListener('click', () => {
+      tabSignIn.classList.add('active');
+      tabSignUp.classList.remove('active');
+      signInForm.classList.add('active');
+      signUpForm.classList.remove('active');
+      if (authHeading) authHeading.textContent = 'Clinician Sign In';
+      if (authSubheading) authSubheading.textContent = 'Access the medical AI diagnosis and ultrasound analytics console';
+    });
+
+    tabSignUp.addEventListener('click', () => {
+      tabSignUp.classList.add('active');
+      tabSignIn.classList.remove('active');
+      signUpForm.classList.add('active');
+      signInForm.classList.remove('active');
+      if (authHeading) authHeading.textContent = 'Register Clinician Account';
+      if (authSubheading) authSubheading.textContent = 'Create secure practitioner credentials stored in Supabase Auth';
+    });
+  }
+
+  // Password toggle show/hide
+  document.querySelectorAll('.btn-toggle-pwd').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const targetId = btn.getAttribute('data-target');
+      const input = document.getElementById(targetId);
+      if (input) {
+        if (input.type === 'password') {
+          input.type = 'text';
+          btn.style.opacity = '1';
+        } else {
+          input.type = 'password';
+          btn.style.opacity = '0.6';
+        }
+      }
+    });
+  });
+
+  // Sign In Form submission
+  if (signInForm) {
+    signInForm.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const email = document.getElementById('loginEmail').value;
+      const pwd = document.getElementById('loginPassword').value;
+
+      try {
+        showLoading(true, 'Verifying credentials with Supabase Auth...');
+        const res = await window.SupabaseAuth.signIn(email, pwd);
+        showLoading(false);
+        updateTopbarProfile(res.user);
+        if (authPortal) authPortal.classList.add('hidden');
+        showToast(`Welcome back, ${res.user.user_metadata?.full_name || res.user.email}!`);
+      } catch (err) {
+        showLoading(false);
+        showToast(err.message, 'error');
+      }
+    });
+  }
+
+  // Sign Up Form submission
+  if (signUpForm) {
+    signUpForm.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const name = document.getElementById('registerName').value;
+      const email = document.getElementById('registerEmail').value;
+      const pwd = document.getElementById('registerPassword').value;
+
+      try {
+        showLoading(true, 'Creating account in Supabase...');
+        const res = await window.SupabaseAuth.signUp(email, pwd, name);
+        showLoading(false);
+        updateTopbarProfile(res.user);
+        if (authPortal) authPortal.classList.add('hidden');
+        showToast(`Account created successfully! Welcome, ${name}.`);
+      } catch (err) {
+        showLoading(false);
+        showToast(err.message, 'error');
+      }
+    });
+  }
+
+  // Demo Login button
+  if (btnDemoLogin) {
+    btnDemoLogin.addEventListener('click', () => {
+      const res = window.SupabaseAuth.signInDemo();
+      updateTopbarProfile(res.user);
+      if (authPortal) authPortal.classList.add('hidden');
+      showToast('Signed in with Clinician Demo Access!');
+    });
+  }
+
+  // Logout button
+  if (btnLogout) {
+    btnLogout.addEventListener('click', async () => {
+      await window.SupabaseAuth.signOut();
+      if (authPortal) authPortal.classList.remove('hidden');
+      showToast('You have been signed out.');
+    });
+  }
+
+  // Supabase Configuration Modal open/close
+  if (btnOpenSupabaseModal && supabaseModal) {
+    btnOpenSupabaseModal.addEventListener('click', () => {
+      if (cfgSupabaseUrl) cfgSupabaseUrl.value = localStorage.getItem('fl_supabase_url') || '';
+      if (cfgSupabaseKey) cfgSupabaseKey.value = localStorage.getItem('fl_supabase_anon_key') || '';
+      if (supabaseTestResult) supabaseTestResult.style.display = 'none';
+      supabaseModal.classList.add('show');
+    });
+  }
+
+  if (btnCloseSupabaseModal && supabaseModal) {
+    btnCloseSupabaseModal.addEventListener('click', () => {
+      supabaseModal.classList.remove('show');
+    });
+  }
+
+  // Test Supabase Connection
+  if (btnTestSupabaseConn) {
+    btnTestSupabaseConn.addEventListener('click', async () => {
+      const url = cfgSupabaseUrl ? cfgSupabaseUrl.value : '';
+      const key = cfgSupabaseKey ? cfgSupabaseKey.value : '';
+      if (!url || !key) {
+        if (supabaseTestResult) {
+          supabaseTestResult.className = 'modal-feedback error';
+          supabaseTestResult.textContent = 'Please enter both Supabase URL and Anon Key.';
+          supabaseTestResult.style.display = 'block';
+        }
+        return;
+      }
+
+      btnTestSupabaseConn.disabled = true;
+      btnTestSupabaseConn.textContent = 'Testing...';
+      const result = await window.SupabaseAuth.testConnection(url, key);
+      btnTestSupabaseConn.disabled = false;
+      btnTestSupabaseConn.textContent = 'Test Connection';
+
+      if (supabaseTestResult) {
+        supabaseTestResult.className = result.success ? 'modal-feedback success' : 'modal-feedback error';
+        supabaseTestResult.textContent = result.message;
+        supabaseTestResult.style.display = 'block';
+      }
+    });
+  }
+
+  // Save Supabase Configuration Form
+  if (supabaseConfigForm) {
+    supabaseConfigForm.addEventListener('submit', (e) => {
+      e.preventDefault();
+      const url = cfgSupabaseUrl ? cfgSupabaseUrl.value : '';
+      const key = cfgSupabaseKey ? cfgSupabaseKey.value : '';
+
+      try {
+        window.SupabaseAuth.saveCredentials(url, key);
+        updateSupabaseStatusDisplay();
+        if (supabaseModal) supabaseModal.classList.remove('show');
+        showToast('Supabase credentials saved successfully!');
+      } catch (err) {
+        showToast(err.message, 'error');
+      }
+    });
+  }
+}
+

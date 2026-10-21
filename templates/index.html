@@ -123,6 +123,154 @@
   </style>
 </head>
 <body>
+  <!-- ======================================================================
+       0. Modern Medical Authentication Portal (Supabase Powered)
+       ====================================================================== -->
+  <div class="auth-overlay-portal" id="authPortal">
+    <div class="auth-card-wrapper">
+      <!-- Left Visual Brand Showcase Panel -->
+      <div class="auth-brand-panel">
+        <div class="auth-brand-header">
+          <div class="brand-logo-wrap" style="width: 44px; height: 44px; border-radius: 12px; overflow: hidden;">
+            <img src="/static/images/liver_logo.jpg" alt="Liver AI Logo" style="width: 100%; height: 100%; object-fit: cover;">
+          </div>
+          <div class="auth-brand-badge">CLINICAL AI SUITE</div>
+        </div>
+
+        <div class="auth-brand-center">
+          <div class="auth-liver-showcase">
+            <img src="/static/images/liver_hero.jpg" alt="Ultrasound AI Anatomy" class="auth-liver-img">
+            <div class="pulse-scanline"></div>
+          </div>
+          <h2 class="auth-hero-title">Fatty Liver <span>Detection System</span></h2>
+          <p class="auth-hero-subtitle">
+            Next-generation quantitative ultrasound steatosis assessment powered by Siamese ResNet-50 deep learning.
+          </p>
+
+          <div class="auth-feature-pills">
+            <div class="auth-pill">
+              <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"></polyline></svg>
+              B-Mode Steatosis Staging
+            </div>
+            <div class="auth-pill">
+              <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"></polyline></svg>
+              Acoustic Decay Biomarkers
+            </div>
+            <div class="auth-pill">
+              <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"></polyline></svg>
+              Supabase Cloud Sync
+            </div>
+          </div>
+        </div>
+
+        <div class="auth-brand-footer">
+          <span>Research Prototype • HIPAA Compliant UI Architecture</span>
+        </div>
+      </div>
+
+      <!-- Right Interactive Form Panel -->
+      <div class="auth-form-panel">
+        <div class="auth-form-top">
+          <div class="auth-form-header">
+            <h3 class="auth-heading" id="authHeading">Clinician Sign In</h3>
+            <p class="auth-subheading" id="authSubheading">Access the medical AI diagnosis and ultrasound analytics console</p>
+          </div>
+
+          <!-- Auth Tabs -->
+          <div class="auth-segmented-tabs">
+            <button type="button" class="auth-tab-btn active" id="tabSignIn">Sign In</button>
+            <button type="button" class="auth-tab-btn" id="tabSignUp">Register</button>
+          </div>
+
+          <!-- Sign In Form -->
+          <form id="signInForm" class="auth-form active">
+            <div class="form-group">
+              <label class="form-label" for="loginEmail">Hospital / Work Email</label>
+              <div class="input-with-icon">
+                <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"></path><polyline points="22,6 12,13 2,6"></polyline></svg>
+                <input type="email" id="loginEmail" placeholder="dr.name@hospital.org" required autocomplete="email">
+              </div>
+            </div>
+
+            <div class="form-group">
+              <label class="form-label" for="loginPassword">Password</label>
+              <div class="input-with-icon">
+                <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect><path d="M7 11V7a5 5 0 0 1 10 0v4"></path></svg>
+                <input type="password" id="loginPassword" placeholder="••••••••" required autocomplete="current-password">
+                <button type="button" class="btn-toggle-pwd" data-target="loginPassword" aria-label="Toggle password visibility">
+                  <svg class="eye-open" xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path><circle cx="12" cy="12" r="3"></circle></svg>
+                </button>
+              </div>
+            </div>
+
+            <button type="submit" class="btn-auth-primary" id="btnSubmitLogin">
+              <span>Sign In to Console</span>
+              <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="9 18 15 12 9 6"></polyline></svg>
+            </button>
+          </form>
+
+          <!-- Sign Up Form -->
+          <form id="signUpForm" class="auth-form">
+            <div class="form-group">
+              <label class="form-label" for="registerName">Full Name & Title</label>
+              <div class="input-with-icon">
+                <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path><circle cx="12" cy="7" r="4"></circle></svg>
+                <input type="text" id="registerName" placeholder="Dr. Rahul Yadav, Radiologist" required>
+              </div>
+            </div>
+
+            <div class="form-group">
+              <label class="form-label" for="registerEmail">Email Address</label>
+              <div class="input-with-icon">
+                <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"></path><polyline points="22,6 12,13 2,6"></polyline></svg>
+                <input type="email" id="registerEmail" placeholder="dr.name@hospital.org" required>
+              </div>
+            </div>
+
+            <div class="form-group">
+              <label class="form-label" for="registerPassword">Create Password</label>
+              <div class="input-with-icon">
+                <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect><path d="M7 11V7a5 5 0 0 1 10 0v4"></path></svg>
+                <input type="password" id="registerPassword" placeholder="Minimum 6 characters" minlength="6" required>
+                <button type="button" class="btn-toggle-pwd" data-target="registerPassword" aria-label="Toggle password visibility">
+                  <svg class="eye-open" xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path><circle cx="12" cy="12" r="3"></circle></svg>
+                </button>
+              </div>
+            </div>
+
+            <button type="submit" class="btn-auth-primary" id="btnSubmitRegister">
+              <span>Create Account in Supabase</span>
+              <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="9 18 15 12 9 6"></polyline></svg>
+            </button>
+          </form>
+
+          <!-- Divider -->
+          <div class="auth-divider">
+            <span>or explore immediately</span>
+          </div>
+
+          <!-- Quick Clinician Demo Access Button -->
+          <button type="button" class="btn-demo-access" id="btnDemoLogin">
+            <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"></polygon></svg>
+            <span>⚡ Quick Clinician Demo Access</span>
+          </button>
+        </div>
+
+        <!-- Supabase Connection Config Bar at Bottom of Card -->
+        <div class="auth-supabase-footer">
+          <div class="supabase-status-pill" id="supabaseStatusIndicator">
+            <span class="status-indicator-dot"></span>
+            <span id="supabaseStatusLabel">Supabase: Not Configured</span>
+          </div>
+          <button type="button" class="btn-config-supabase" id="btnOpenSupabaseModal">
+            <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"></circle><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path></svg>
+            Configure Keys
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
   <div class="app-container">
     
     <!-- ======================================================================
@@ -248,6 +396,22 @@
               <line x1="12" y1="17" x2="12.01" y2="17"></line>
             </svg>
           </button>
+
+          <!-- Clinician Profile Badge & Sign Out -->
+          <div class="user-profile-badge" id="userProfileBadge">
+            <div class="user-avatar" id="userAvatar">DR</div>
+            <div class="user-info-text">
+              <span class="user-name" id="userDisplayName">Dr. Rahul Yadav</span>
+              <span class="user-role" id="userDisplayRole">Radiologist</span>
+            </div>
+            <button type="button" class="btn-logout" id="btnLogout" title="Sign Out">
+              <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"></path>
+                <polyline points="16 17 21 12 16 7"></polyline>
+                <line x1="21" y1="12" x2="9" y2="12"></line>
+              </svg>
+            </button>
+          </div>
         </div>
       </header>
 
@@ -904,11 +1068,60 @@
     </div>
   </div>
 
+  <!-- Supabase Project Configuration Modal -->
+  <div class="modal-backdrop" id="supabaseModal">
+    <div class="modal-card">
+      <div class="modal-header">
+        <div class="modal-title-group">
+          <span class="modal-icon">
+            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2L2 7l10 5 10-5-10-5z"></path><path d="M2 17l10 5 10-5"></path><path d="M2 12l10 5 10-5"></path></svg>
+          </span>
+          <div>
+            <h3 class="modal-title">Supabase Project Configuration</h3>
+            <p class="modal-subtitle">Connect your Supabase project for real-time authentication &amp; cloud scan sync</p>
+          </div>
+        </div>
+        <button type="button" class="btn-modal-close" id="btnCloseSupabaseModal">&times;</button>
+      </div>
+
+      <form id="supabaseConfigForm" class="modal-body">
+        <div class="form-group">
+          <label class="form-label" for="cfgSupabaseUrl">Supabase Project URL</label>
+          <div class="input-with-icon">
+            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"></circle><line x1="2" y1="12" x2="22" y2="12"></line><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"></path></svg>
+            <input type="url" id="cfgSupabaseUrl" placeholder="https://xyzcompany.supabase.co" required>
+          </div>
+          <span class="form-help">Found in Supabase Dashboard &gt; Project Settings &gt; API</span>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label" for="cfgSupabaseKey">Supabase Anon Public API Key</label>
+          <div class="input-with-icon">
+            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect><path d="M7 11V7a5 5 0 0 1 10 0v4"></path></svg>
+            <input type="password" id="cfgSupabaseKey" placeholder="eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..." required>
+          </div>
+          <span class="form-help">Found in Supabase Dashboard &gt; Project Settings &gt; API &gt; anon public</span>
+        </div>
+
+        <div class="modal-feedback" id="supabaseTestResult" style="display: none;"></div>
+
+        <div class="modal-actions">
+          <button type="button" class="btn-secondary" id="btnTestSupabaseConn">Test Connection</button>
+          <button type="submit" class="btn-primary" id="btnSaveSupabaseConfig">Save &amp; Connect</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
   <!-- Toast Notification -->
   <div class="toast" id="toast"></div>
 
+  <!-- Supabase JS Client SDK -->
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="/static/js/supabase_client.js?v=20261022.2"></script>
+
   <!-- Charting Engine & Client JavaScript -->
   <script src="/static/js/chart.min.js"></script>
-  <script src="/static/js/dashboard.js?v=20261022.7"></script>
+  <script src="/static/js/dashboard.js?v=20261022.8"></script>
 </body>
 </html>
