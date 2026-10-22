@@ -11,7 +11,7 @@
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
   
   <!-- Clinical Dashboard CSS -->
-  <link rel="stylesheet" href="/static/css/dashboard.css?v=20261022.18">
+  <link rel="stylesheet" href="/static/css/dashboard.css?v=20261022.19">
 
   <!-- Resilient Styling for Analytics & Clinical Graph Card -->
   <style>
@@ -124,6 +124,36 @@
 </head>
 <body>
   <!-- ======================================================================
+       Clinical AI Splash Preloader
+       ====================================================================== -->
+  <div class="app-preloader" id="appPreloader">
+    <div class="preloader-card">
+      <div class="preloader-radar-wrapper">
+        <div class="radar-ring ring-1"></div>
+        <div class="radar-ring ring-2"></div>
+        <div class="radar-ring ring-3"></div>
+        <div class="preloader-center-icon">
+          <img src="/static/images/liver_logo.jpg" alt="Fatty Liver AI Logo" class="preloader-logo-img">
+        </div>
+      </div>
+      
+      <div class="preloader-brand-title">
+        <h2>Fatty Liver <span>Detection System</span></h2>
+        <span class="preloader-badge">Siamese ResNet-50 AI Engine</span>
+      </div>
+
+      <div class="preloader-status-container">
+        <span class="preloader-status-dot"></span>
+        <span class="preloader-status-text" id="preloaderStatusText">Initializing Ultrasound Diagnostic Console...</span>
+      </div>
+
+      <div class="preloader-progress-bar">
+        <div class="preloader-progress-fill" id="preloaderProgressFill"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ======================================================================
        0. Modern Medical Authentication Portal (Supabase Powered)
        ====================================================================== -->
   <div class="auth-overlay-portal" id="authPortal">
@@ -194,13 +224,14 @@
 
             <div class="form-group">
               <label class="form-label" for="loginPassword">Password</label>
-              <div class="input-with-icon">
+              <div class="input-with-icon" id="loginPasswordWrap">
                 <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect><path d="M7 11V7a5 5 0 0 1 10 0v4"></path></svg>
                 <input type="password" id="loginPassword" placeholder="••••••••" required autocomplete="current-password">
-                <button type="button" class="btn-toggle-pwd" data-target="loginPassword" aria-label="Toggle password visibility">
-                  <svg class="eye-open" xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path><circle cx="12" cy="12" r="3"></circle></svg>
+                <button type="button" class="btn-toggle-pwd" data-target="loginPassword" aria-label="Show password" title="Show password">
+                  <svg class="eye-icon" xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8z"></path><circle cx="12" cy="12" r="3"></circle></svg>
                 </button>
               </div>
+              <div class="auth-field-error" id="loginErrorMsg" style="display: none;"></div>
             </div>
 
             <button type="submit" class="btn-auth-primary" id="btnSubmitLogin">
@@ -229,13 +260,14 @@
 
             <div class="form-group">
               <label class="form-label" for="registerPassword">Create Password</label>
-              <div class="input-with-icon">
+              <div class="input-with-icon" id="registerPasswordWrap">
                 <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect><path d="M7 11V7a5 5 0 0 1 10 0v4"></path></svg>
                 <input type="password" id="registerPassword" placeholder="Minimum 6 characters" minlength="6" required>
-                <button type="button" class="btn-toggle-pwd" data-target="registerPassword" aria-label="Toggle password visibility">
-                  <svg class="eye-open" xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path><circle cx="12" cy="12" r="3"></circle></svg>
+                <button type="button" class="btn-toggle-pwd" data-target="registerPassword" aria-label="Show password" title="Show password">
+                  <svg class="eye-icon" xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8z"></path><circle cx="12" cy="12" r="3"></circle></svg>
                 </button>
               </div>
+              <div class="auth-field-error" id="registerErrorMsg" style="display: none;"></div>
             </div>
 
             <button type="submit" class="btn-auth-primary" id="btnSubmitRegister">
@@ -1344,9 +1376,13 @@
   <!-- Loading Overlay -->
   <div class="loading-overlay" id="loadingOverlay">
     <div class="loading-box">
-      <div class="spinner"></div>
-      <h3 style="font-size: 1.1rem; color: var(--text-heading);" id="loadingText">Processing...</h3>
-      <p style="font-size: 0.8rem; color: var(--text-muted);">Please wait while the neural network processes the ultrasound features.</p>
+      <div class="hud-radar-disc">
+        <div class="hud-ring-outer"></div>
+        <div class="hud-ring-inner"></div>
+        <div class="hud-center-dot"></div>
+      </div>
+      <h3 class="hud-title" id="loadingText">Processing Ultrasound Scan...</h3>
+      <p class="hud-subtitle" id="loadingSubtext">Please wait while the neural network analyzes ultrasound features.</p>
     </div>
   </div>
 
@@ -1433,10 +1469,10 @@
 
   <!-- Supabase JS Client SDK -->
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-  <script src="/static/js/supabase_client.js?v=20261022.18"></script>
+  <script src="/static/js/supabase_client.js?v=20261022.19"></script>
 
   <!-- Charting Engine & Client JavaScript -->
   <script src="/static/js/chart.min.js"></script>
-  <script src="/static/js/dashboard.js?v=20261022.18"></script>
+  <script src="/static/js/dashboard.js?v=20261022.19"></script>
 </body>
 </html>

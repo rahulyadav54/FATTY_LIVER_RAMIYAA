@@ -183,9 +183,16 @@
           password: password
         });
 
-        // If email confirmation is required, auto-confirm via backend and retry
-        if (error && (error.message.includes('not confirmed') || error.status === 400)) {
-          console.info('Requesting auto-confirmation for clinician account...');
+        // Only auto-confirm if Supabase explicitly complains that the email is not confirmed
+        const errMsg = (error && error.message) ? error.message.toLowerCase() : '';
+        const isUnconfirmed = error && (
+          errMsg.includes('not confirmed') ||
+          errMsg.includes('unconfirmed') ||
+          error.code === 'email_not_confirmed'
+        );
+
+        if (isUnconfirmed) {
+          console.info('Requesting auto-confirmation for unconfirmed clinician account...');
           await this.requestAutoConfirm(cleanEmail);
           const retry = await this.client.auth.signInWithPassword({
             email: cleanEmail,
@@ -196,6 +203,15 @@
         }
 
         if (error) {
+          const rawMsg = error.message || '';
+          if (rawMsg.toLowerCase().includes('invalid login credentials') ||
+              rawMsg.toLowerCase().includes('invalid credentials') ||
+              error.status === 400) {
+            const userFriendlyError = new Error('Invalid email or password. Please verify your credentials and try again.');
+            userFriendlyError.isAuthError = true;
+            userFriendlyError.status = 400;
+            throw userFriendlyError;
+          }
           throw error;
         }
 
