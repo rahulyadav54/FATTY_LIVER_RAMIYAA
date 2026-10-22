@@ -298,24 +298,24 @@
     }
 
     /**
-     * Fetch prediction history from Supabase cloud
+     * Fetch prediction history from Supabase cloud strictly for the active user
      */
     async fetchHistory(limit = 50) {
       if (!this.client) return [];
 
+      // Strict per-user isolation: User must be authenticated to fetch their records
+      if (!this.currentUser || !this.currentUser.id) {
+        return [];
+      }
+
       try {
-        let query = this.client
+        const { data, error } = await this.client
           .from('patient_predictions')
           .select('*')
+          .eq('user_id', this.currentUser.id)
           .order('created_at', { ascending: false })
           .limit(limit);
 
-        // Filter by user if authenticated and not in demo mode
-        if (this.currentUser && !this.isDemoMode && this.currentUser.id) {
-          query = query.or(`user_id.eq.${this.currentUser.id},user_id.is.null`);
-        }
-
-        const { data, error } = await query;
         if (error) {
           console.info('Supabase cloud history notice:', error.message);
           return [];
@@ -340,16 +340,16 @@
     }
 
     /**
-     * Sync prediction to Supabase table (patient_predictions)
+     * Sync prediction to Supabase table (patient_predictions) tied to active user
      */
     async syncPrediction(predictionData, file) {
-      if (!this.client) {
+      if (!this.client || !this.currentUser || !this.currentUser.id) {
         return false;
       }
 
       try {
-        const userId = (this.currentUser && !this.isDemoMode) ? this.currentUser.id : null;
-        const userEmail = this.currentUser ? this.currentUser.email : 'clinician@hospital.org';
+        const userId = this.currentUser.id;
+        const userEmail = this.currentUser.email || 'clinician@hospital.org';
         const filename = (file && file.name) ? file.name : (predictionData.filename || 'ultrasound_scan.jpg');
         const recordId = 'FL-' + Date.now().toString(36).toUpperCase();
 
@@ -380,7 +380,7 @@
           return false;
         }
 
-        console.log('☁️ Prediction successfully synced to Supabase cloud:', recordId);
+        console.log('☁️ Prediction successfully synced to Supabase cloud for user:', userId, recordId);
         return data ? data[0] : true;
       } catch (err) {
         console.warn('Sync error:', err);
@@ -389,15 +389,16 @@
     }
 
     /**
-     * Delete prediction from Supabase cloud
+     * Delete prediction from Supabase cloud (user-scoped)
      */
     async deletePrediction(recordId) {
-      if (!this.client) return false;
+      if (!this.client || !this.currentUser || !this.currentUser.id) return false;
 
       try {
         const { error } = await this.client
           .from('patient_predictions')
           .delete()
+          .eq('user_id', this.currentUser.id)
           .or(`record_id.eq.${recordId},id.eq.${recordId}`);
 
         if (error) {
@@ -412,19 +413,17 @@
     }
 
     /**
-     * Clear all prediction records for the active user
+     * Clear all prediction records strictly for the active user
      */
     async clearUserPredictions() {
-      if (!this.client) return false;
+      if (!this.client || !this.currentUser || !this.currentUser.id) return false;
 
       try {
-        let query = this.client.from('patient_predictions').delete();
-        if (this.currentUser && !this.isDemoMode) {
-          query = query.eq('user_id', this.currentUser.id);
-        } else {
-          query = query.is('user_id', null);
-        }
-        const { error } = await query;
+        const { error } = await this.client
+          .from('patient_predictions')
+          .delete()
+          .eq('user_id', this.currentUser.id);
+
         if (error) {
           console.warn('Clear predictions cloud notice:', error.message);
           return false;

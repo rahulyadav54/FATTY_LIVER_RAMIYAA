@@ -406,12 +406,16 @@ def auto_confirm_user():
 
 @app.route('/api/history', methods=['GET'])
 def get_cloud_history():
-    """Retrieve persistent ultrasound prediction history from Supabase cloud"""
+    """Retrieve persistent ultrasound prediction history from Supabase cloud (user-scoped)"""
     if not supabase_admin:
         return jsonify({'history': []})
     try:
         limit = min(int(request.args.get('limit', 50)), 100)
-        res = supabase_admin.table('patient_predictions').select('*').order('created_at', desc=True).limit(limit).execute()
+        user_id = request.args.get('user_id')
+        query = supabase_admin.table('patient_predictions').select('*').order('created_at', desc=True).limit(limit)
+        if user_id:
+            query = query.eq('user_id', user_id)
+        res = query.execute()
         return jsonify({'history': res.data or []})
     except Exception as e:
         return jsonify({'history': [], 'error': str(e)})

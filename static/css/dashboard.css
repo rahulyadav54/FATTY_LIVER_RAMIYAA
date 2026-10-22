@@ -148,6 +148,48 @@ body {
   border-bottom: 1px solid var(--border-subtle);
 }
 
+.sidebar-close-btn {
+  display: none;
+  background: transparent;
+  border: none;
+  color: var(--text-muted);
+  font-size: 1.6rem;
+  line-height: 1;
+  cursor: pointer;
+  padding: 4px 8px;
+  margin-left: auto;
+  border-radius: var(--radius-sm);
+  transition: color 0.15s, background 0.15s;
+}
+
+.sidebar-close-btn:hover {
+  color: var(--text-heading);
+  background: var(--bg-surface-subtle);
+}
+
+.sidebar-backdrop {
+  position: fixed;
+  inset: 0;
+  background: rgba(15, 23, 42, 0.65);
+  backdrop-filter: blur(4px);
+  -webkit-backdrop-filter: blur(4px);
+  z-index: 998;
+  opacity: 0;
+  visibility: hidden;
+  pointer-events: none;
+  transition: opacity 0.25s ease, visibility 0.25s ease;
+}
+
+.sidebar-backdrop.active {
+  opacity: 1;
+  visibility: visible;
+  pointer-events: auto;
+}
+
+body.sidebar-drawer-open {
+  overflow: hidden;
+}
+
 .brand-logo-wrap {
   width: 48px;
   height: 48px;
@@ -1401,7 +1443,7 @@ body {
 }
 
 /* ==========================================================================
-   Responsive Breakpoints
+   Responsive Breakpoints & Mobile Optimization
    ========================================================================== */
 @media (max-width: 1200px) {
   .feature-grid {
@@ -1409,24 +1451,46 @@ body {
   }
   .analysis-workspace {
     grid-template-columns: 1fr;
+    gap: 20px;
   }
   .prob-cards-grid {
     grid-template-columns: repeat(3, 1fr);
   }
 }
 
+@media (max-width: 992px) {
+  .acoustic-metrics-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
 @media (max-width: 900px) {
   .sidebar {
+    width: 280px;
+    max-width: 84vw;
+    z-index: 1000;
+    box-shadow: 4px 0 28px rgba(0, 0, 0, 0.22);
     transform: translateX(-100%);
+    transition: transform 0.28s cubic-bezier(0.16, 1, 0.3, 1);
   }
   .sidebar.open {
     transform: translateX(0);
   }
+  .sidebar-close-btn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
   .main-wrapper {
     margin-left: 0;
+    width: 100%;
+    max-width: 100vw;
+    overflow-x: hidden;
   }
   .mobile-menu-btn {
-    display: block;
+    display: flex;
+    align-items: center;
+    justify-content: center;
   }
   .medical-hero {
     flex-direction: column;
@@ -1450,11 +1514,102 @@ body {
   .about-grid {
     grid-template-columns: 1fr;
   }
+  .settings-container {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 768px) {
+  .topbar {
+    padding: 0 16px;
+    height: 60px;
+  }
+  .topbar-left {
+    gap: 12px;
+  }
+  .topbar-right {
+    gap: 10px;
+  }
+  .user-info-text {
+    display: none;
+  }
+  .user-profile-badge {
+    padding: 4px 6px;
+    gap: 6px;
+  }
+  .model-badge-top {
+    padding: 4px 10px;
+    font-size: 0.72rem;
+  }
+  .history-controls {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 12px;
+  }
+  .search-input-wrap {
+    min-width: 100%;
+    width: 100%;
+  }
+  .filter-select {
+    width: 100%;
+  }
+  .card-header {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 12px;
+  }
+  .card-actions {
+    width: 100%;
+    display: flex;
+    gap: 8px;
+  }
+  .card-actions button {
+    flex: 1;
+    justify-content: center;
+  }
+  .patient-meta-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+  .a4-modal-overlay {
+    padding: 0;
+  }
+  .a4-modal-dialog {
+    width: 100%;
+    max-width: 100vw;
+    height: 100vh;
+    max-height: 100vh;
+    border-radius: 0;
+    border: none;
+  }
+  .a4-modal-toolbar {
+    padding: 0 12px;
+    height: 52px;
+  }
+  .a4-format-badge {
+    display: none;
+  }
+  .a4-toolbar-actions {
+    gap: 6px;
+  }
+  .btn-a4-print,
+  .btn-a4-download {
+    padding: 6px 10px;
+    font-size: 0.75rem;
+  }
+  .a4-document-viewport {
+    padding: 12px 6px 36px;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    justify-content: flex-start;
+  }
+  .a4-report-sheet {
+    margin: 0 auto;
+  }
 }
 
 @media (max-width: 600px) {
   .content-area {
-    padding: 16px;
+    padding: 16px 12px 40px;
   }
   .feature-grid {
     grid-template-columns: 1fr;
@@ -1462,8 +1617,100 @@ body {
   .prob-cards-grid {
     grid-template-columns: 1fr;
   }
+  .medical-hero {
+    padding: 20px 16px;
+  }
   .hero-title {
-    font-size: 1.5rem;
+    font-size: 1.35rem;
+    letter-spacing: -0.3px;
+  }
+  .hero-subtitle {
+    font-size: 0.875rem;
+  }
+  .patient-meta-grid {
+    grid-template-columns: 1fr;
+    gap: 10px;
+  }
+  .acoustic-metrics-grid {
+    grid-template-columns: 1fr;
+  }
+  .graph-card-header {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 14px;
+  }
+  .graph-tabs {
+    width: 100%;
+    flex-direction: column;
+  }
+  .graph-tab-btn {
+    width: 100%;
+    justify-content: center;
+  }
+  .dropzone {
+    padding: 24px 14px;
+  }
+  .dropzone-title {
+    font-size: 0.95rem;
+  }
+  .btn-browse {
+    width: 100%;
+    max-width: 220px;
+    justify-content: center;
+  }
+  .mode-toggle-group {
+    width: 100%;
+    margin-top: 6px;
+  }
+  .mode-tab-btn {
+    flex: 1;
+    text-align: center;
+    justify-content: center;
+  }
+  .settings-row {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 10px;
+  }
+  .settings-input,
+  .range-slider-wrapper {
+    width: 100%;
+    min-width: 0;
+  }
+  .settings-actions-bar {
+    flex-direction: column;
+    gap: 10px;
+  }
+  .settings-actions-bar button {
+    width: 100%;
+    justify-content: center;
+  }
+  /* Prevent iOS Safari 16px auto-zoom */
+  input[type="text"],
+  input[type="email"],
+  input[type="password"],
+  input[type="date"],
+  select {
+    font-size: 16px !important;
+  }
+}
+
+@media (max-width: 500px) {
+  .breadcrumbs {
+    display: none;
+  }
+  .model-badge-top span#topbarStatusText {
+    display: none;
+  }
+  .model-badge-top {
+    padding: 6px;
+    border-radius: 50%;
+  }
+  .model-badge-top .pulse-dot {
+    margin: 0;
+  }
+  #helpBtn {
+    display: none;
   }
 }
 

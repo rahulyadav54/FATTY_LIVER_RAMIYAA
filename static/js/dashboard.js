@@ -16,13 +16,33 @@ function getApiBaseUrl() {
   return 'https://fatty-liver-ramiyaa.onrender.com';
 }
 
+// User-Isolated Prediction History Storage Helpers
+function getUserHistoryStorageKey() {
+  const user = window.SupabaseAuth?.getUser();
+  return (user && user.id) ? `fl_history_${user.id}` : 'fl_history_guest';
+}
+
+function loadUserLocalHistory() {
+  const key = getUserHistoryStorageKey();
+  try {
+    return JSON.parse(localStorage.getItem(key) || '[]');
+  } catch (e) {
+    return [];
+  }
+}
+
+function saveUserLocalHistory(historyList) {
+  const key = getUserHistoryStorageKey();
+  localStorage.setItem(key, JSON.stringify(historyList));
+}
+
 // Application State
 const state = {
   currentView: 'dashboard',
   selectedFile: null,
   activeSample: 'normal',
   classificationMode: 'multiclass',
-  history: JSON.parse(localStorage.getItem('fl_prediction_history') || '[]'),
+  history: [],
   theme: localStorage.getItem('fl_theme') || 'light',
   samples: {},
   modelInfo: null
@@ -160,24 +180,68 @@ function updateThemeIcon() {
 // Navigation & Views
 // ==========================================================================
 function setupNavigation() {
+  const sidebarBackdrop = document.getElementById('sidebarBackdrop');
+  const sidebarCloseBtn = document.getElementById('sidebarCloseBtn');
+
+  function closeMobileSidebar() {
+    if (elements.sidebar) {
+      elements.sidebar.classList.remove('open');
+    }
+    if (sidebarBackdrop) {
+      sidebarBackdrop.classList.remove('active');
+    }
+    document.body.classList.remove('sidebar-drawer-open');
+  }
+
+  function openMobileSidebar() {
+    if (elements.sidebar) {
+      elements.sidebar.classList.add('open');
+    }
+    if (sidebarBackdrop) {
+      sidebarBackdrop.classList.add('active');
+    }
+    document.body.classList.add('sidebar-drawer-open');
+  }
+
   elements.navItems.forEach(item => {
     item.addEventListener('click', (e) => {
       e.preventDefault();
       const targetView = item.getAttribute('data-view');
       switchView(targetView);
-
-      // Close mobile sidebar if open
-      if (elements.sidebar.classList.contains('open')) {
-        elements.sidebar.classList.remove('open');
-      }
+      closeMobileSidebar();
     });
   });
 
   if (elements.mobileMenuBtn) {
-    elements.mobileMenuBtn.addEventListener('click', () => {
-      elements.sidebar.classList.toggle('open');
+    elements.mobileMenuBtn.addEventListener('click', (e) => {
+      e.stopPropagation();
+      if (elements.sidebar && elements.sidebar.classList.contains('open')) {
+        closeMobileSidebar();
+      } else {
+        openMobileSidebar();
+      }
     });
   }
+
+  if (sidebarCloseBtn) {
+    sidebarCloseBtn.addEventListener('click', (e) => {
+      e.stopPropagation();
+      closeMobileSidebar();
+    });
+  }
+
+  if (sidebarBackdrop) {
+    sidebarBackdrop.addEventListener('click', () => {
+      closeMobileSidebar();
+    });
+  }
+
+  // Close on Escape key press
+  document.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape' && elements.sidebar && elements.sidebar.classList.contains('open')) {
+      closeMobileSidebar();
+    }
+  });
 
   // Quick help link in topbar
   const helpBtn = document.getElementById('helpBtn');
@@ -942,14 +1006,14 @@ function setupHistory() {
   }
   if (elements.clearHistoryBtn) {
     elements.clearHistoryBtn.addEventListener('click', async () => {
-      if (confirm('Are you sure you want to clear all prediction history records?')) {
+      if (confirm('Are you sure you want to clear your prediction history records?')) {
         state.history = [];
-        localStorage.removeItem('fl_prediction_history');
+        saveUserLocalHistory([]);
         renderHistory();
         if (window.SupabaseAuth) {
           await window.SupabaseAuth.clearUserPredictions();
         }
-        showToast('Prediction history cleared');
+        showToast('Your prediction history has been cleared');
       }
     });
   }
@@ -960,6 +1024,16 @@ function setupHistory() {
 
 async function loadCloudHistory() {
   if (!window.SupabaseAuth) return;
+  const user = window.SupabaseAuth.getUser();
+  if (!user || !user.id) {
+    state.history = [];
+    renderHistory();
+    return;
+  }
+
+  // Load active user's local history first
+  state.history = loadUserLocalHistory();
+
   try {
     const cloudRecords = await window.SupabaseAuth.fetchHistory(50);
     if (cloudRecords && cloudRecords.length > 0) {
@@ -976,9 +1050,11 @@ async function loadCloudHistory() {
         const timeB = new Date(b.created_at || b.timestamp).getTime() || 0;
         return timeB - timeA;
       });
-      localStorage.setItem('fl_prediction_history', JSON.stringify(state.history));
+      saveUserLocalHistory(state.history);
       renderHistory();
-      console.log(`☁️ Loaded ${cloudRecords.length} records from Supabase cloud`);
+      console.log(`☁️ Loaded ${cloudRecords.length} records for active user: ${user.email}`);
+    } else {
+      renderHistory();
     }
   } catch (e) {
     console.warn('loadCloudHistory notice:', e);
@@ -1000,7 +1076,7 @@ function saveToHistory(result, file) {
 
   state.history.unshift(record);
   if (state.history.length > 50) state.history.pop(); // keep last 50
-  localStorage.setItem('fl_prediction_history', JSON.stringify(state.history));
+  saveUserLocalHistory(state.history);
   renderHistory();
 }
 
@@ -1257,7 +1333,12 @@ function initAuthentication() {
   if (window.SupabaseAuth && window.SupabaseAuth.isAuthenticated()) {
     if (authPortal) authPortal.classList.add('hidden');
     updateTopbarProfile(window.SupabaseAuth.getUser());
+    state.history = loadUserLocalHistory();
+    renderHistory();
+    loadCloudHistory();
   } else {
+    state.history = [];
+    renderHistory();
     if (authPortal) authPortal.classList.remove('hidden');
   }
 
@@ -1315,7 +1396,9 @@ function initAuthentication() {
         updateTopbarProfile(res.user);
         if (authPortal) authPortal.classList.add('hidden');
         showToast(`Welcome back, ${res.user.user_metadata?.full_name || res.user.email}!`);
-        loadCloudHistory();
+        state.history = loadUserLocalHistory();
+        renderHistory();
+        await loadCloudHistory();
       } catch (err) {
         showLoading(false);
         showToast(err.message, 'error');
@@ -1338,7 +1421,9 @@ function initAuthentication() {
         updateTopbarProfile(res.user);
         if (authPortal) authPortal.classList.add('hidden');
         showToast(`Account created successfully! Welcome, ${name}.`);
-        loadCloudHistory();
+        state.history = loadUserLocalHistory();
+        renderHistory();
+        await loadCloudHistory();
       } catch (err) {
         showLoading(false);
         showToast(err.message, 'error');
@@ -1350,6 +1435,8 @@ function initAuthentication() {
   if (btnLogout) {
     btnLogout.addEventListener('click', async () => {
       await window.SupabaseAuth.signOut();
+      state.history = [];
+      renderHistory();
       if (authPortal) authPortal.classList.remove('hidden');
       showToast('You have been signed out.');
     });

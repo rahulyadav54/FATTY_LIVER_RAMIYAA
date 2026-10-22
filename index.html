@@ -11,7 +11,7 @@
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
   
   <!-- Clinical Dashboard CSS -->
-  <link rel="stylesheet" href="/static/css/dashboard.css?v=20261022.17">
+  <link rel="stylesheet" href="/static/css/dashboard.css?v=20261022.18">
 
   <!-- Resilient Styling for Analytics & Clinical Graph Card -->
   <style>
@@ -274,6 +274,7 @@
           <h1>Fatty Liver <span>Detection System</span></h1>
           <span class="brand-badge">AI Ultrasound Analysis</span>
         </div>
+        <button type="button" class="sidebar-close-btn" id="sidebarCloseBtn" aria-label="Close Navigation">&times;</button>
       </div>
 
       <nav class="sidebar-nav">
@@ -342,6 +343,9 @@
         </div>
       </div>
     </aside>
+
+    <!-- Mobile Sidebar Backdrop Overlay -->
+    <div class="sidebar-backdrop" id="sidebarBackdrop"></div>
 
     <!-- ======================================================================
          Main Layout Wrapper
@@ -1429,10 +1433,10 @@
 
   <!-- Supabase JS Client SDK -->
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-  <script src="/static/js/supabase_client.js?v=20261022.16"></script>
+  <script src="/static/js/supabase_client.js?v=20261022.18"></script>
 
   <!-- Charting Engine & Client JavaScript -->
   <script src="/static/js/chart.min.js"></script>
-  <script src="/static/js/dashboard.js?v=20261022.17"></script>
+  <script src="/static/js/dashboard.js?v=20261022.18"></script>
 </body>
 </html>
